@@ -24,6 +24,8 @@ const appState = {
 
 // Save app data to localStorage
 function saveAppData() {
+    console.log('Zapisuję dane aplikacji:', JSON.stringify(appState.employees));
+    console.log('localStorage dostępny:', typeof localStorage !== 'undefined');
     localStorage.setItem('harmonogramApp', JSON.stringify({
         employees: appState.employees,
         settings: appState.settings,

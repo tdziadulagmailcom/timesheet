@@ -132,6 +132,9 @@ function editEmployee(event) {
     // Update UI
     renderEmployeesList();
     populateEmployeeSelectors();
+    updateScheduleUI();
+    updateCalendarUI();
+    console.log('Zaktualizowany pracownik:', employee); // Do debugowania
     
     // Update summary if the current employee is being edited
     if (employeeId === Number(appState.currentEmployeeId)) {
