@@ -4,21 +4,228 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Harmonogram Pracy</title>
-    <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- Tu znajdzie się cała struktura HTML - nagłówek, zakładki i formularze -->
-    
-    <!-- Importy skryptów JS -->
+    <header>
+        <div class="header-container">
+            <h1 id="app-title">Harmonogram Pracy</h1>
+            <div class="language-selector">
+                <span id="language-label">Język:</span>
+                <select id="header-language-select">
+                    <option value="pl">Polski</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" data-tab="schedule" id="tab-schedule">Harmonogram</button>
+            <button class="tab" data-tab="employees" id="tab-employees">Pracownicy</button>
+            <button class="tab" data-tab="settings" id="tab-settings">Ustawienia</button>
+            <button class="tab" data-tab="calendar" id="tab-calendar">Kalendarz</button>
+        </div>
+
+        <!-- Harmonogram tab -->
+        <div id="schedule" class="tab-content active">
+            <div class="card">
+                <div class="schedule-container">
+                    <div class="employee-selector">
+                        <label for="employee-select" id="label-select-employee">Wybierz pracownika:</label>
+                        <select id="employee-select">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+
+                    <div class="week-navigator">
+                        <button id="prev-week" class="btn btn-secondary" data-translate="prev-week">← Poprzedni tydzień</button>
+                        <h3 id="current-week-display"></h3>
+                        <button id="next-week" class="btn btn-secondary" data-translate="next-week">Następny tydzień →</button>
+                    </div>
+
+                    <table class="week-table">
+                        <thead>
+                            <tr>
+                                <th id="th-day">Dzień</th>
+                                <th id="th-date">Data</th>
+                                <th id="th-start">Początek</th>
+                                <th id="th-end">Koniec</th>
+                                <th id="th-hours">Godziny</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedule-table-body">
+                            <!-- Rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+
+                    <div class="form-group">
+                        <button id="save-schedule" class="btn" data-translate="save-schedule">Zapisz harmonogram</button>
+                        <button id="export-week" class="btn btn-secondary" data-translate="export-excel">Eksportuj do Excel</button>
+                    </div>
+
+                    <div class="summary-section">
+                        <h3 id="summary-title">Podsumowanie tygodnia</h3>
+                        <table class="summary-table">
+                            <thead>
+                                <tr>
+                                    <th id="th-category">Kategoria</th>
+                                    <th id="th-summary-hours">Godziny</th>
+                                    <th id="th-value">Wartość</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summary-table-body">
+                                <tr>
+                                    <td id="label-regular-hours">Godziny standardowe</td>
+                                    <td id="regular-hours">0</td>
+                                    <td id="regular-value">0.00 zł</td>
+                                </tr>
+                                <tr>
+                                    <td id="label-overtime-hours">Nadgodziny</td>
+                                    <td id="overtime-hours">0</td>
+                                    <td id="overtime-value">0.00 zł</td>
+                                </tr>
+                                <tr>
+                                    <td id="label-total">Suma</td>
+                                    <td id="total-hours">0</td>
+                                    <td id="total-value">0.00 zł</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pracownicy tab -->
+        <div id="employees" class="tab-content">
+            <div class="card">
+                <h3 id="employees-list-title">Lista pracowników</h3>
+                <div id="employees-list" class="employees-list">
+                    <!-- Employee list will be populated by JavaScript -->
+                </div>
+
+                <h3 id="add-employee-title">Dodaj nowego pracownika</h3>
+                <div class="form-group">
+                    <label for="employee-name" id="label-employee-name">Imię i nazwisko:</label>
+                    <input type="text" id="employee-name" placeholder="Np. Jan Kowalski">
+                </div>
+                <div class="form-group">
+                    <label for="employee-rate" id="label-employee-rate">Stawka godzinowa:</label>
+                    <input type="number" id="employee-rate" min="0" step="0.01" placeholder="Np. 20.00">
+                </div>
+                <div class="form-group">
+                    <button id="add-employee" class="btn" data-translate="add-employee">Dodaj pracownika</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ustawienia tab -->
+        <div id="settings" class="tab-content">
+            <div class="card">
+                <h3 id="settings-general-title">Ustawienia ogólne</h3>
+                
+                <!-- Language Settings -->
+                <div class="form-group">
+                    <label for="language-select" id="label-language">Język:</label>
+                    <select id="language-select">
+                        <option value="pl">Polski</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+                
+                <!-- Currency Settings -->
+                <div class="form-group">
+                    <label for="currency-select" id="label-currency">Waluta:</label>
+                    <select id="currency-select">
+                        <option value="PLN">Polski złoty (PLN)</option>
+                        <option value="GBP">British pound (GBP)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="regular-hours-limit" id="label-hours-limit">Limit godzin standardowych (tygodniowo):</label>
+                    <input type="number" id="regular-hours-limit" min="0" value="40">
+                </div>
+                <div class="form-group">
+                    <label for="overtime-rate-multiplier" id="label-overtime-multiplier">Mnożnik stawki dla nadgodzin:</label>
+                    <input type="number" id="overtime-rate-multiplier" min="1" step="0.1" value="1.5">
+                </div>
+                
+                <div class="form-group">
+                    <button id="save-settings" class="btn" data-translate="save-settings">Zapisz ustawienia</button>
+                </div>
+                
+                <!-- Bank Holidays -->
+                <h3 id="bank-holidays-title">Dni świąteczne (Bank Holidays)</h3>
+                <div class="bank-holiday-list" id="bank-holiday-list">
+                    <!-- Bank holidays will be populated by JavaScript -->
+                </div>
+                
+                <div class="form-group">
+                    <label for="bank-holiday-name" id="label-holiday-name">Nazwa:</label>
+                    <input type="text" id="bank-holiday-name" placeholder="Np. Boże Narodzenie">
+                </div>
+                <div class="form-group">
+                    <label for="bank-holiday-date" id="label-holiday-date">Data:</label>
+                    <input type="date" id="bank-holiday-date">
+                </div>
+                <div class="form-group">
+                    <button id="add-bank-holiday" class="btn" data-translate="add-holiday">Dodaj dzień świąteczny</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kalendarz tab -->
+        <div id="calendar" class="tab-content">
+            <div class="card">
+                <div class="calendar-container">
+                    <div class="employee-selector">
+                        <label for="calendar-employee-select" id="label-calendar-employee">Wybierz pracownika:</label>
+                        <select id="calendar-employee-select">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+
+                    <div class="month-navigator">
+                        <button id="prev-month" class="btn btn-secondary" data-translate="prev-month">← Poprzedni miesiąc</button>
+                        <h3 id="current-month-display"></h3>
+                        <button id="next-month" class="btn btn-secondary" data-translate="next-month">Następny miesiąc →</button>
+                    </div>
+
+                    <table class="calendar" id="month-calendar">
+                        <thead>
+                            <tr id="calendar-header">
+                                <th id="day-mon">Pon</th>
+                                <th id="day-tue">Wt</th>
+                                <th id="day-wed">Śr</th>
+                                <th id="day-thu">Czw</th>
+                                <th id="day-fri">Pt</th>
+                                <th id="day-sat">Sob</th>
+                                <th id="day-sun">Nie</th>
+                            </tr>
+                        </thead>
+                        <tbody id="calendar-table-body">
+                            <!-- Calendar cells will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load JavaScript modules -->
     <script src="js/translations.js"></script>
+    <script src="js/app-state.js"></script>
     <script src="js/utils.js"></script>
-    <script src="js/state.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/employees.js"></script>
-    <script src="js/holidays.js"></script>
     <script src="js/schedule.js"></script>
     <script src="js/calendar.js"></script>
+    <script src="js/settings.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

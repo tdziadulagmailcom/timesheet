@@ -1,0 +1,402 @@
+:root {
+    --primary-color: #1a73e8;
+    --secondary-color: #4285f4;
+    --light-blue: #e8f0fe;
+    --dark-blue: #174ea6;
+    --border-color: #dadce0;
+    --text-color: #202124;
+    --success-color: #0f9d58;
+    --holiday-color: #ffcccc;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: var(--text-color);
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px 0;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+h1, h2, h3 {
+    margin: 0;
+    padding: 0;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-color);
+    position: relative;
+}
+
+.tab.active {
+    color: var(--primary-color);
+}
+
+.tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: var(--primary-color);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background-color: var(--dark-blue);
+}
+
+.btn-secondary {
+    background-color: white;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+}
+
+.btn-secondary:hover {
+    background-color: var(--light-blue);
+}
+
+.btn-danger {
+    background-color: #ea4335;
+}
+
+.btn-danger:hover {
+    background-color: #d33426;
+}
+
+.employees-list {
+    margin-bottom: 20px;
+}
+
+.employee-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.employee-item:last-child {
+    border-bottom: none;
+}
+
+.schedule-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.employee-selector {
+    margin-bottom: 20px;
+}
+
+.week-navigator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.week-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.week-table th {
+    background-color: var(--light-blue);
+    padding: 10px;
+    text-align: left;
+    border: 1px solid var(--border-color);
+}
+
+.week-table td {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+}
+
+.week-table input[type="time"] {
+    width: calc(100% - 10px);
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.summary-section {
+    margin-top: 20px;
+}
+
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.summary-table th, .summary-table td {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.summary-table th {
+    background-color: var(--light-blue);
+}
+
+.calendar-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.month-navigator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.calendar {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.calendar th {
+    background-color: var(--light-blue);
+    padding: 10px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.calendar td {
+    height: 120px;
+    vertical-align: top;
+    border: 1px solid var(--border-color);
+    padding: 5px;
+    position: relative;
+}
+
+.calendar-date {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.calendar-hours {
+    font-size: 12px;
+    color: var(--text-color);
+    margin-top: 5px;
+    max-height: 80px;
+    overflow-y: auto;
+}
+
+.alert {
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.alert-success {
+    background-color: var(--success-color);
+}
+
+.alert-error {
+    background-color: #ea4335;
+}
+
+.hidden {
+    display: none;
+}
+
+.bank-holiday-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+.bank-holiday-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.bank-holiday-item:last-child {
+    border-bottom: none;
+}
+
+.bank-holiday {
+    background-color: var(--holiday-color);
+}
+
+.bank-holiday-label {
+    font-size: 11px;
+    color: #d33426;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+/* Language selector in header */
+.language-selector {
+    display: flex;
+    align-items: center;
+    color: white;
+}
+
+.language-selector select {
+    width: auto;
+    padding: 5px;
+    margin-left: 10px;
+    background-color: white;
+    border: none;
+}
+
+/* Custom time picker styles */
+.custom-time-select {
+    display: flex;
+    align-items: center;
+}
+
+.custom-time-select select {
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin: 0 2px;
+}
+
+.custom-time-select .hour-select {
+    width: 60px;
+}
+
+.custom-time-select .minute-select {
+    width: 60px;
+}
+
+/* Hide default time picker indicator */
+input[type="time"]::-webkit-calendar-picker-indicator {
+    display: none;
+}
+
+/* Employee schedule in calendar */
+.employee-schedule {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+    border-bottom: 1px dotted #eee;
+    margin-bottom: 2px;
+}
+
+.employee-schedule:last-child {
+    border-bottom: none;
+}
+
+.employee-name {
+    font-weight: bold;
+    color: var(--primary-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 65%;
+    font-size: 11px;
+}
+
+.employee-hours {
+    font-size: 11px;
+}
+
+/* Calendar cell styles */
+.calendar td {
+    height: 110px;
+    max-width: 150px;
+    vertical-align: top;
+    padding: 4px;
+    overflow: hidden;
+}
+
+.calendar-hours {
+    border-top: 1px solid #eee;
+    margin-top: 3px;
+    padding-top: 3px;
+    max-height: 70px;
+    overflow-y: auto;
+}
