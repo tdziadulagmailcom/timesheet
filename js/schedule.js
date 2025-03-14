@@ -217,7 +217,7 @@ function updateWeekSummary() {
     // Calculate values
     const regularValue = (regularMinutes / 60) * rate;
     const overtimeValue = (overtimeMinutes / 60) * rate * appState.settings.overtimeRateMultiplier;
-    const totalValue = regularValue + overtimeValue + payroll;
+    const totalValue = regularValue + overtimeValue - payroll + category1Value + category2Value;
     
     // Update the summary table
     document.getElementById('regular-hours').textContent = formatHoursFromMinutes(regularMinutes);
@@ -236,6 +236,14 @@ function updateWeekSummary() {
         payrollHoursCell.textContent = '-';
         payrollValueCell.textContent = formatCurrency(payroll);
     }
+}
+
+// 2. Add event listeners for the custom category value fields
+function initCustomCategoryFields() {
+    const customValueInputs = document.querySelectorAll('.custom-category-value');
+    customValueInputs.forEach(input => {
+        input.addEventListener('input', updateWeekSummary);
+    });
 }
 
 // Save schedule data
@@ -280,6 +288,20 @@ function exportWeekToExcel() {
     // Create workbook and worksheet
     const wb = XLSX.utils.book_new();
     
+    // Add custom categories to Excel export
+    const category1Name = document.getElementById('custom-category-1').value || 'Custom Category 1';
+    const category2Name = document.getElementById('custom-category-2').value || 'Custom Category 2';
+    const category1Value = document.getElementById('custom-category-value-1').value || '0';
+    const category2Value = document.getElementById('custom-category-value-2').value || '0';
+ 
+    // Format currency for Excel
+    const category1Currency = formatCurrency(parseFloat(category1Value));
+    const category2Currency = formatCurrency(parseFloat(category2Value));
+ 
+    // Add to wsData before the total row
+    wsData.push([category1Name, '', '-', '', category1Currency]);
+    wsData.push([category2Name, '', '-', '', category2Currency]);
+
     // Get employee name
     const employee = appState.employees.find(emp => emp.id === Number(appState.currentEmployeeId));
     const employeeName = employee ? employee.name : 'Pracownik';

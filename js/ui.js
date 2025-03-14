@@ -22,6 +22,8 @@ function initTabs() {
 function addEventListeners() {
     console.log('Adding event listeners...');
     
+    initCustomCategoryFields();
+
     try {
         // Employee selectors
         safeBind('employee-select', 'change', handleEmployeeChange);
@@ -96,6 +98,12 @@ function addEventListeners() {
 function updateLanguage(language) {
     console.log('Updating language to:', language);
     
+    const category1Input = document.getElementById('custom-category-1');
+    const category2Input = document.getElementById('custom-category-2');
+
+    if (category1Input) category1Input.placeholder = translations[language]['custom-category-1-placeholder'];
+    if (category2Input) category2Input.placeholder = translations[language]['custom-category-2-placeholder'];
+
     // Make sure language is valid
     if (language !== 'pl' && language !== 'en') {
         console.error('Invalid language:', language);

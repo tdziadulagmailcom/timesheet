@@ -72,10 +72,14 @@ const translations = {
         'days': ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'],
         'months': ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 
                   'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'],
-        'bank-holiday': 'Dzień świąteczny'
+        'bank-holiday': 'Dzień świąteczny',
+        'custom-category-1-placeholder': 'Dodatkowa kategoria 1',
+        'custom-category-2-placeholder': 'Dodatkowa kategoria 2'
     },
     en: {
         'app-title': 'Work Schedule',
+        'custom-category-1-placeholder': 'Additional category 1',
+        'custom-category-2-placeholder': 'Additional category 2',
         'label-employee-payroll': 'Payroll:',
         'label-payroll': 'Payroll',
         'invalid-payroll': 'Please enter a valid payroll amount.',

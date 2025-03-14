@@ -521,3 +521,32 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     color: #e53935;
     font-weight: bold;
 }
+
+/* Style for custom category fields */
+.custom-category input[type="text"] {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.custom-category input[type="number"] {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: right;
+}
+
+/* Color for negative values */
+.custom-category input[type="number"]:invalid,
+.custom-category input[type="number"].negative {
+    color: #ea4335;
+}
+
+/* Ensure proper alignment in the table */
+.summary-table td input {
+    margin: 0;
+}
