@@ -515,9 +515,9 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 
 /* Style dla podświetlenia pracownika w kalendarzu */
 .employee-name.highlighted-employee {
-    background-color: var(--light-blue);
+    background-color: #ffdddd;
     border-radius: 3px;
     padding: 2px 4px;
-    color: var(--primary-color);
+    color: #e53935;
     font-weight: bold;
 }

@@ -2,6 +2,9 @@
 const translations = {
     pl: {
         'app-title': 'Harmonogram Pracy',
+        'label-employee-payroll': 'Payroll:',
+        'label-payroll': 'Payroll',
+        'invalid-payroll': 'Proszę podać prawidłową kwotę payroll.',
         'language-label': 'Język:',
         'tab-schedule': 'Harmonogram',
         'tab-employees': 'Pracownicy',
@@ -73,6 +76,9 @@ const translations = {
     },
     en: {
         'app-title': 'Work Schedule',
+        'label-employee-payroll': 'Payroll:',
+        'label-payroll': 'Payroll',
+        'invalid-payroll': 'Please enter a valid payroll amount.',
         'language-label': 'Language:',
         'tab-schedule': 'Schedule',
         'tab-employees': 'Employees',

@@ -209,14 +209,15 @@ function updateWeekSummary() {
         return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
     };
     
-    // Get employee rate
+    // Get employee rate and payroll
     const employee = appState.employees.find(emp => emp.id === Number(appState.currentEmployeeId));
     const rate = employee ? employee.rate : 0;
+    const payroll = employee ? (employee.payroll || 0) : 0;
     
     // Calculate values
     const regularValue = (regularMinutes / 60) * rate;
     const overtimeValue = (overtimeMinutes / 60) * rate * appState.settings.overtimeRateMultiplier;
-    const totalValue = regularValue + overtimeValue;
+    const totalValue = regularValue + overtimeValue + payroll;
     
     // Update the summary table
     document.getElementById('regular-hours').textContent = formatHoursFromMinutes(regularMinutes);
@@ -226,6 +227,15 @@ function updateWeekSummary() {
     document.getElementById('regular-value').textContent = formatCurrency(regularValue);
     document.getElementById('overtime-value').textContent = formatCurrency(overtimeValue);
     document.getElementById('total-value').textContent = formatCurrency(totalValue);
+    
+    // Update payroll row
+    const payrollHoursCell = document.getElementById('payroll-hours');
+    const payrollValueCell = document.getElementById('payroll-value');
+    
+    if (payrollHoursCell && payrollValueCell) {
+        payrollHoursCell.textContent = '-';
+        payrollValueCell.textContent = formatCurrency(payroll);
+    }
 }
 
 // Save schedule data
@@ -323,6 +333,7 @@ function exportWeekToExcel() {
     
     const regularValue = document.getElementById('regular-value').textContent;
     const overtimeValue = document.getElementById('overtime-value').textContent;
+    const payrollValue = document.getElementById('payroll-value').textContent;
     const totalValue = document.getElementById('total-value').textContent;
     
     wsData.push([translations[language]['summary-title'], '', '', '', '']);
@@ -335,6 +346,8 @@ function exportWeekToExcel() {
     ]);
     wsData.push([translations[language]['label-regular-hours'], '', regularHours, '', regularValue]);
     wsData.push([translations[language]['label-overtime-hours'], '', overtimeHours, '', overtimeValue]);
+    // Dodaj wiersz payroll
+    wsData.push([translations[language]['label-payroll'], '', '-', '', payrollValue]);
     wsData.push([translations[language]['label-total'], '', totalHours, '', totalValue]);
     
     // Create worksheet and add to workbook

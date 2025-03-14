@@ -1,8 +1,8 @@
 // Application state management
 const appState = {
     employees: [
-        { id: 1, name: 'Jan Kowalski', rate: 25.00 },
-        { id: 2, name: 'Anna Nowak', rate: 27.50 }
+        { id: 1, name: 'Jan Kowalski', rate: 25.00, payroll: 1000.00 },
+        { id: 2, name: 'Anna Nowak', rate: 27.50, payroll: 1200.00 }
     ],
     settings: {
         regularHoursLimit: 40,
@@ -96,6 +96,14 @@ function checkAppState() {
         ];
     }
     
+    if (!appState.employees || appState.employees.length === 0) {
+        console.warn('No employees, adding defaults...');
+        appState.employees = [
+            { id: 1, name: 'Jan Kowalski', rate: 25.00, payroll: 1000.00 },
+            { id: 2, name: 'Anna Nowak', rate: 27.50, payroll: 1200.00 }
+        ];
+    }
+
     // Check if current employee is set
     if (!appState.currentEmployeeId || !appState.employees.some(e => e.id === appState.currentEmployeeId)) {
         console.warn('Invalid current employee, setting first...');

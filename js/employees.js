@@ -10,10 +10,16 @@ function renderEmployeesList() {
     appState.employees.forEach(employee => {
         const item = document.createElement('div');
         item.className = 'employee-item';
+        
+        // Dodaj informację o payroll
+        const payrollText = language === 'pl' ? 'Payroll' : 'Payroll';
+        const payrollValue = employee.payroll ? formatCurrency(employee.payroll) : formatCurrency(0);
+        
         item.innerHTML = `
             <div>
                 <strong>${employee.name}</strong><br>
-                ${language === 'pl' ? 'Stawka' : 'Rate'}: ${formatCurrency(employee.rate)}/${language === 'pl' ? 'h' : 'hr'}
+                ${language === 'pl' ? 'Stawka' : 'Rate'}: ${formatCurrency(employee.rate)}/${language === 'pl' ? 'h' : 'hr'}<br>
+                ${payrollText}: ${payrollValue}
             </div>
             <div>
                 <button class="btn btn-secondary edit-employee" data-id="${employee.id}">${translations[language]['edit']}</button>
@@ -30,9 +36,11 @@ function addEmployee() {
     console.log('Adding new employee...');
     const nameInput = document.getElementById('employee-name');
     const rateInput = document.getElementById('employee-rate');
+    const payrollInput = document.getElementById('employee-payroll');
     
     const name = nameInput.value.trim();
     const rate = parseFloat(rateInput.value);
+    const payroll = parseFloat(payrollInput.value) || 0;
     
     const language = appState.settings.language;
     
@@ -57,7 +65,8 @@ function addEmployee() {
     appState.employees.push({
         id: newId,
         name: name,
-        rate: rate
+        rate: rate,
+        payroll: payroll
     });
     
     console.log('Employee added:', { id: newId, name: name, rate: rate });
@@ -68,6 +77,7 @@ function addEmployee() {
     // Clear inputs
     nameInput.value = '';
     rateInput.value = '';
+    payrollInput.value = '';
     
     // Update UI
     renderEmployeesList();
@@ -103,9 +113,18 @@ function editEmployee(event) {
         return;
     }
     
-    // Update employee data
+    const newPayroll = prompt(language === 'pl' ? 'Podaj nową kwotę payroll:' : 'Enter new payroll amount:', employee.payroll || 0);
+    const parsedPayroll = parseFloat(newPayroll);
+    
+    if (isNaN(parsedPayroll) || parsedPayroll < 0) {
+        alert(language === 'pl' ? 'Proszę podać prawidłową kwotę payroll.' : 'Please enter a valid payroll amount.');
+        return;
+    }
+    
+    // Aktualizacja danych pracownika
     employee.name = newName.trim();
     employee.rate = parsedRate;
+    employee.payroll = parsedPayroll;
     
     // Save to localStorage
     saveAppData();

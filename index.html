@@ -89,6 +89,11 @@
                                     <td id="overtime-value">0.00 zł</td>
                                 </tr>
                                 <tr>
+                                    <td id="label-payroll">Payroll</td>
+                                    <td id="payroll-hours">-</td>
+                                    <td id="payroll-value">0.00 zł</td>
+                                </tr>
+                                <tr>
                                     <td id="label-total">Suma</td>
                                     <td id="total-hours">0</td>
                                     <td id="total-value">0.00 zł</td>
@@ -116,6 +121,10 @@
                 <div class="form-group">
                     <label for="employee-rate" id="label-employee-rate">Stawka godzinowa:</label>
                     <input type="number" id="employee-rate" min="0" step="0.01" placeholder="Np. 20.00">
+                </div>
+                <div class="form-group">
+                    <label for="employee-payroll" id="label-employee-payroll">Payroll:</label>
+                    <input type="number" id="employee-payroll" min="0" step="0.01" placeholder="Np. 1000.00">
                 </div>
                 <div class="form-group">
                     <button id="add-employee" class="btn" data-translate="add-employee">Dodaj pracownika</button>
