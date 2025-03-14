@@ -206,7 +206,14 @@ function updateWeekSummary() {
     const formatHoursFromMinutes = (minutes) => {
         const h = Math.floor(minutes / 60);
         const m = minutes % 60;
-        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        
+        // Format as "X hr" when no minutes
+        if (m === 0) {
+            return `${h} hr`;
+        }
+        
+        // Format as "X hr Y min" when there are minutes
+        return `${h} hr ${m} min`;
     };
     
     // Get employee rate and payroll

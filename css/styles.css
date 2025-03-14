@@ -206,8 +206,9 @@ input, select {
 }
 
 .summary-table {
-    width: 100%;
+    width: 75%;
     border-collapse: collapse;
+    margin: 0 auto; /* Center the table */
 }
 
 .summary-table th, .summary-table td {
@@ -561,4 +562,36 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 #regular-value.negative,
 #overtime-value.negative {
     color: #ea4335;
+}
+
+/* Set column widths in the summary table */
+.summary-table th:nth-child(1),
+.summary-table td:nth-child(1) {
+    width: 60%;
+}
+
+.summary-table th:nth-child(2),
+.summary-table td:nth-child(2) {
+    width: 20%;
+}
+
+.summary-table th:nth-child(3),
+.summary-table td:nth-child(3) {
+    width: 20%;
+}
+
+/* Text alignment for hours and values */
+.summary-table td:nth-child(2),
+.summary-table td:nth-child(3) {
+    text-align: right;
+}
+
+/* Make the input width in custom categories match cell width */
+.custom-category input[type="text"] {
+    width: 90%;
+}
+
+.custom-category input[type="number"] {
+    width: 80%;
+    text-align: right;
 }
