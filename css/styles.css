@@ -234,6 +234,7 @@ input, select {
 
 .calendar {
     width: 100%;
+    table-layout: fixed; /* Use fixed layout for better width control */
     border-collapse: collapse;
 }
 
@@ -244,12 +245,47 @@ input, select {
     border: 1px solid var(--border-color);
 }
 
+/* Set different widths for weekdays and weekend days */
+.calendar th:nth-child(1),
+.calendar th:nth-child(2),
+.calendar th:nth-child(3),
+.calendar th:nth-child(4),
+.calendar th:nth-child(5),
+.calendar td:nth-child(1),
+.calendar td:nth-child(2),
+.calendar td:nth-child(3),
+.calendar td:nth-child(4),
+.calendar td:nth-child(5) {
+    width: 17%; /* Each weekday gets 17% of the width */
+}
+
+.calendar th:nth-child(6),
+.calendar th:nth-child(7),
+.calendar td:nth-child(6),
+.calendar td:nth-child(7) {
+    width: 7.5%; /* Weekend days get 7.5% each */
+}
+
 .calendar td {
-    height: 120px;
     vertical-align: top;
     border: 1px solid var(--border-color);
     padding: 5px;
     position: relative;
+    overflow: hidden;
+}
+
+/* Different heights for weekdays and weekend days */
+.calendar td:nth-child(1),
+.calendar td:nth-child(2),
+.calendar td:nth-child(3),
+.calendar td:nth-child(4),
+.calendar td:nth-child(5) {
+    height: 120px; /* Keep weekday cells taller and closer to square shape */
+}
+
+.calendar td:nth-child(6),
+.calendar td:nth-child(7) {
+    height: 80px; /* Make weekend cells shorter */
 }
 
 .calendar-date {
