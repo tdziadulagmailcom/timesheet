@@ -2,6 +2,10 @@
 const translations = {
     pl: {
         'app-title': 'Harmonogram Pracy',
+        'th-day': 'Dzień',
+        'th-date': 'Data',
+        'th-type': 'Typ',
+        'th-start': 'Początek',
         'label-employee-payroll': 'Payroll:',
         'label-payroll': 'Payroll',
         'invalid-payroll': 'Proszę podać prawidłową kwotę payroll.',
@@ -83,6 +87,10 @@ const translations = {
         'custom-category-2-placeholder': 'Additional category 2',
         'label-employee-payroll': 'Payroll:',
         'label-payroll': 'Payroll',
+        'th-day': 'Day',
+        'th-date': 'Date',
+        'th-type': 'Type',
+        'th-start': 'Start',
         'label-payment-due': 'To Pay',
         'invalid-payroll': 'Please enter a valid payroll amount.',
         'language-label': 'Language:',

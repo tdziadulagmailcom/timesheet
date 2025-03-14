@@ -21,7 +21,7 @@ function updateScheduleUI() {
             
             // Get saved schedule for this day, if it exists
             const scheduleKey = `${appState.currentEmployeeId}_${dateString}`;
-            const daySchedule = appState.schedule[scheduleKey] || { start: '', end: '' };
+            const daySchedule = appState.schedule[scheduleKey] || { start: '', end: '', type: '' };
             
             const row = document.createElement('tr');
             
@@ -38,6 +38,16 @@ function updateScheduleUI() {
             row.innerHTML = `
                 <td>${days[i]}${isBankHol ? `<br><span class="bank-holiday-label">${translations[language]['bank-holiday']}</span>` : ''}</td>
                 <td>${formatDateForDisplay(date)}</td>
+                <td>
+                    <select class="type-select" data-day="${i}">
+                        <option value="" ${!daySchedule.type ? 'selected' : ''}></option>
+                        <option value="Holiday" ${daySchedule.type === 'Holiday' ? 'selected' : ''}>Holiday</option>
+                        <option value="Bank Holiday" ${daySchedule.type === 'Bank Holiday' ? 'selected' : ''}>Bank Holiday</option>
+                        <option value="Sick" ${daySchedule.type === 'Sick' ? 'selected' : ''}>Sick</option>
+                        <option value="Off" ${daySchedule.type === 'Off' ? 'selected' : ''}>Off</option>
+                        <option value="Home" ${daySchedule.type === 'Home' ? 'selected' : ''}>Home</option>
+                    </select>
+                </td>
                 <td><input type="time" class="start-time" data-day="${i}" value="${daySchedule.start}" step="900"></td>
                 <td><input type="time" class="end-time" data-day="${i}" value="${daySchedule.end}" step="900"></td>
                 <td class="hours-cell" data-day="${i}">${formattedHours}</td>
@@ -141,6 +151,12 @@ function initScheduleInputs() {
             input.addEventListener('change', updateHoursForDay);
         });
         
+        // Add event listeners for type dropdowns
+        const typeDropdowns = document.querySelectorAll('.type-select');
+        typeDropdowns.forEach(dropdown => {
+            dropdown.addEventListener('change', updateTypeForDay);
+        });
+        
         console.log('Time fields initialized successfully');
     } catch (error) {
         console.error('Error initializing time fields:', error);
@@ -162,8 +178,8 @@ function updateHoursForDay(event) {
             return;
         }
         
+        // Calculate hours regardless of selected type
         const hours = calculateHours(startInput.value, endInput.value);
-        // Use new formatting function to display hours in "X hr" format
         hoursCell.textContent = formatHoursForDisplay(hours);
         
         // Update summary
@@ -183,10 +199,12 @@ function calculateTotalHours() {
         const startInput = document.querySelector(`.start-time[data-day="${i}"]`);
         const endInput = document.querySelector(`.end-time[data-day="${i}"]`);
         
-        if (startInput.value && endInput.value) {
+        if (startInput && endInput && startInput.value && endInput.value) {
             const hours = calculateHours(startInput.value, endInput.value);
-            const [h, m] = hours.split(':').map(Number);
-            totalMinutes += h * 60 + m;
+            if (hours) {
+                const [h, m] = hours.split(':').map(Number);
+                totalMinutes += h * 60 + m;
+            }
         }
     }
     
@@ -308,17 +326,22 @@ function saveSchedule() {
         const dateString = formatDate(date);
         const startInput = document.querySelector(`.start-time[data-day="${i}"]`);
         const endInput = document.querySelector(`.end-time[data-day="${i}"]`);
+        const typeSelect = document.querySelector(`.type-select[data-day="${i}"]`);
         
         const scheduleKey = `${appState.currentEmployeeId}_${dateString}`;
         
-        // Only save if both start and end times are set
-        if (startInput.value && endInput.value) {
+        // Get the selected type value
+        const selectedType = typeSelect ? typeSelect.value : '';
+        
+        // Only save if both start and end times are set or if a type is selected
+        if ((startInput.value && endInput.value) || selectedType) {
             appState.schedule[scheduleKey] = {
-                start: startInput.value,
-                end: endInput.value
+                start: startInput.value || '',
+                end: endInput.value || '',
+                type: selectedType
             };
         } else if (appState.schedule[scheduleKey]) {
-            // Remove entry if times are cleared
+            // Remove entry if times are cleared and no type is selected
             delete appState.schedule[scheduleKey];
         }
     }
@@ -358,6 +381,7 @@ function exportWeekToExcel() {
         [
             translations[language]['th-day'], 
             translations[language]['th-date'], 
+            translations[language]['th-type'],
             translations[language]['th-start'], 
             translations[language]['th-end'], 
             translations[language]['th-hours']
@@ -379,6 +403,7 @@ function exportWeekToExcel() {
         wsData.push([
             days[i] + (bankHolidayName ? ` (${translations[language]['bank-holiday']}: ${bankHolidayName})` : ''),
             displayDate,
+            daySchedule.type || '',
             daySchedule.start,
             daySchedule.end,
             calculateHours(daySchedule.start, daySchedule.end)
@@ -464,4 +489,32 @@ function navigateToNextWeek() {
     newDate.setDate(newDate.getDate() + 7);
     setCurrentWeekStart(newDate);
     updateScheduleUI();
+}
+
+// Update type for a specific day when dropdown changes
+function updateTypeForDay(event) {
+    console.log('Updating type for day...');
+    
+    try {
+        const selectedType = event.target.value;
+        
+        // Find row and modify based on selected type
+        const row = event.target.closest('tr');
+        if (row) {
+            // Reset classes first
+            row.classList.remove('bank-holiday');
+            
+            // Apply specific styling based on type
+            if (selectedType === 'Bank Holiday') {
+                row.classList.add('bank-holiday');
+            }
+        }
+    } catch (error) {
+        console.error('Error updating type for day:', error);
+    }
+}
+
+// Update hours display for a specific day when time inputs change
+function updateHoursForDay(event) {
+    console.log('Updating hours for day...');
 }

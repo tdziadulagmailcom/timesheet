@@ -210,16 +210,30 @@ input, select {
 }
 
 .week-table th:nth-child(2) {
+    width: 15%;
+}
+
+.week-table th:nth-child(3) {
+    width: 15%;
+}
+
+.week-table th:nth-child(4),
+.week-table th:nth-child(5) {
     width: 20%;
 }
 
-.week-table th:nth-child(3),
-.week-table th:nth-child(4) {
-    width: 25%;
+.week-table th:nth-child(6) {
+    width: 15%;
 }
 
-.week-table th:nth-child(5) {
-    width: 15%;
+/* Style for type dropdown */
+.type-select {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: white;
 }
 
 /* Center all headers and cells in the week table */
