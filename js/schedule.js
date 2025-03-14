@@ -534,3 +534,54 @@ function updateTypeForDay(event) {
 function updateHoursForDay(event) {
     console.log('Updating hours for day...');
 }
+
+// Add this function to schedule.js
+function resetWeek() {
+    console.log('Attempting to reset week schedule...');
+    const language = appState.settings.language;
+    
+    // Check if reset password is set
+    if (!appState.settings.resetPassword) {
+        alert(language === 'pl' ? 'Hasło do resetowania nie zostało ustawione w opcjach.' : 'Reset password is not set in options.');
+        return;
+    }
+    
+    // Ask for password
+    const enteredPassword = prompt(translations[language]['enter-reset-password']);
+    
+    // Check if password is correct
+    if (enteredPassword !== appState.settings.resetPassword) {
+        alert(translations[language]['invalid-reset-password']);
+        return;
+    }
+    
+    // Confirm reset
+    if (!confirm(translations[language]['confirm-reset-week'])) {
+        return;
+    }
+    
+    // Get current employee ID and week dates
+    const employeeId = appState.currentEmployeeId;
+    
+    // Remove all schedule entries for this employee for this week
+    for (let i = 0; i < 7; i++) {
+        const date = getDateForDay(i);
+        const dateString = formatDate(date);
+        const scheduleKey = `${employeeId}_${dateString}`;
+        
+        // Remove entry if it exists
+        if (appState.schedule[scheduleKey]) {
+            delete appState.schedule[scheduleKey];
+        }
+    }
+    
+    // Save to localStorage
+    saveAppData();
+    
+    // Update UI
+    updateScheduleUI();
+    updateCalendarUI();
+    
+    // Show confirmation
+    alert(translations[language]['week-reset']);
+}

@@ -8,7 +8,8 @@ const appState = {
         regularHoursLimit: 40,
         overtimeRateMultiplier: 1.5,
         currency: 'PLN',
-        language: 'pl'
+        language: 'pl',
+        resetPassword: '' // Add th
     },
     bankHolidays: [
         { id: 1, name: 'Nowy Rok', date: '2025-01-01' },

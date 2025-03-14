@@ -7,6 +7,8 @@ function saveSettings() {
     const overtimeRateMultiplierInput = document.getElementById('overtime-rate-multiplier');
     const currencySelect = document.getElementById('currency-select');
     const languageSelect = document.getElementById('language-select');
+    const resetPasswordInput = document.getElementById('reset-password');
+    const resetPassword = resetPasswordInput.value;
     
     const regularHoursLimit = parseInt(regularHoursLimitInput.value);
     const overtimeRateMultiplier = parseFloat(overtimeRateMultiplierInput.value);
@@ -37,6 +39,7 @@ function saveSettings() {
     appState.settings.regularHoursLimit = regularHoursLimit;
     appState.settings.overtimeRateMultiplier = overtimeRateMultiplier;
     appState.settings.currency = currency;
+    appState.settings.resetPassword = resetPassword;
     
     console.log('Settings updated in appState');
     

@@ -29,6 +29,8 @@ function addEventListeners() {
         // Initialize schedule inputs
         initScheduleInputs();
         
+        safeBind('reset-week', 'click', resetWeek);
+
         // Employee selectors
         safeBind('employee-select', 'change', handleEmployeeChange);
         safeBind('calendar-employee-select', 'change', handleCalendarEmployeeChange);
