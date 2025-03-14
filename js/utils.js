@@ -100,9 +100,11 @@ function formatHoursForCalendar(timeStr) {
 
 // Format currency based on selected currency
 function formatCurrency(amount) {
+    // Get currency from app state
     const currency = appState.settings.currency;
     const symbol = currencySymbols[currency];
     
+    // Format based on currency type
     if (currency === 'PLN') {
         return `${amount.toFixed(2)} ${symbol}`;
     } else {

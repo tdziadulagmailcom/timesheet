@@ -214,9 +214,15 @@ function updateWeekSummary() {
     const rate = employee ? employee.rate : 0;
     const payroll = employee ? (employee.payroll || 0) : 0;
     
+    // Get custom category values - this was missing!
+    const category1Value = parseFloat(document.getElementById('custom-category-value-1').value) || 0;
+    const category2Value = parseFloat(document.getElementById('custom-category-value-2').value) || 0;
+    
     // Calculate values
     const regularValue = (regularMinutes / 60) * rate;
     const overtimeValue = (overtimeMinutes / 60) * rate * appState.settings.overtimeRateMultiplier;
+    
+    // Calculate total (SUBTRACT payroll instead of adding it)
     const totalValue = regularValue + overtimeValue - payroll + category1Value + category2Value;
     
     // Update the summary table
@@ -226,23 +232,30 @@ function updateWeekSummary() {
     
     document.getElementById('regular-value').textContent = formatCurrency(regularValue);
     document.getElementById('overtime-value').textContent = formatCurrency(overtimeValue);
+    document.getElementById('payroll-value').textContent = formatCurrency(payroll);
     document.getElementById('total-value').textContent = formatCurrency(totalValue);
-    
-    // Update payroll row
-    const payrollHoursCell = document.getElementById('payroll-hours');
-    const payrollValueCell = document.getElementById('payroll-value');
-    
-    if (payrollHoursCell && payrollValueCell) {
-        payrollHoursCell.textContent = '-';
-        payrollValueCell.textContent = formatCurrency(payroll);
-    }
 }
 
+
 // 2. Add event listeners for the custom category value fields
+
 function initCustomCategoryFields() {
     const customValueInputs = document.querySelectorAll('.custom-category-value');
     customValueInputs.forEach(input => {
         input.addEventListener('input', updateWeekSummary);
+    });
+    
+    // Add class for negative values
+    document.querySelectorAll('.custom-category-value').forEach(input => {
+        input.addEventListener('input', function() {
+            if (parseFloat(this.value) < 0) {
+                this.classList.add('negative');
+            } else {
+                this.classList.remove('negative');
+            }
+            // Make sure to update the summary
+            updateWeekSummary();
+        });
     });
 }
 
@@ -288,20 +301,6 @@ function exportWeekToExcel() {
     // Create workbook and worksheet
     const wb = XLSX.utils.book_new();
     
-    // Add custom categories to Excel export
-    const category1Name = document.getElementById('custom-category-1').value || 'Custom Category 1';
-    const category2Name = document.getElementById('custom-category-2').value || 'Custom Category 2';
-    const category1Value = document.getElementById('custom-category-value-1').value || '0';
-    const category2Value = document.getElementById('custom-category-value-2').value || '0';
- 
-    // Format currency for Excel
-    const category1Currency = formatCurrency(parseFloat(category1Value));
-    const category2Currency = formatCurrency(parseFloat(category2Value));
- 
-    // Add to wsData before the total row
-    wsData.push([category1Name, '', '-', '', category1Currency]);
-    wsData.push([category2Name, '', '-', '', category2Currency]);
-
     // Get employee name
     const employee = appState.employees.find(emp => emp.id === Number(appState.currentEmployeeId));
     const employeeName = employee ? employee.name : 'Pracownik';
@@ -356,7 +355,16 @@ function exportWeekToExcel() {
     const regularValue = document.getElementById('regular-value').textContent;
     const overtimeValue = document.getElementById('overtime-value').textContent;
     const payrollValue = document.getElementById('payroll-value').textContent;
-    const totalValue = document.getElementById('total-value').textContent;
+    
+    // Get custom category values - Add this in the right place
+    const category1Name = document.getElementById('custom-category-1').value || (language === 'pl' ? 'Dodatkowa kategoria 1' : 'Additional category 1');
+    const category2Name = document.getElementById('custom-category-2').value || (language === 'pl' ? 'Dodatkowa kategoria 2' : 'Additional category 2');
+    const category1Value = parseFloat(document.getElementById('custom-category-value-1').value) || 0;
+    const category2Value = parseFloat(document.getElementById('custom-category-value-2').value) || 0;
+    
+    // Format currency for Excel
+    const category1Currency = formatCurrency(category1Value);
+    const category2Currency = formatCurrency(category2Value);
     
     wsData.push([translations[language]['summary-title'], '', '', '', '']);
     wsData.push([
@@ -368,10 +376,16 @@ function exportWeekToExcel() {
     ]);
     wsData.push([translations[language]['label-regular-hours'], '', regularHours, '', regularValue]);
     wsData.push([translations[language]['label-overtime-hours'], '', overtimeHours, '', overtimeValue]);
-    // Dodaj wiersz payroll
     wsData.push([translations[language]['label-payroll'], '', '-', '', payrollValue]);
+    
+    // Add custom categories
+    wsData.push([category1Name, '', '-', '', category1Currency]);
+    wsData.push([category2Name, '', '-', '', category2Currency]);
+    
+    const totalValue = document.getElementById('total-value').textContent;
     wsData.push([translations[language]['label-total'], '', totalHours, '', totalValue]);
     
+    // Rest of the function...
     // Create worksheet and add to workbook
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     

@@ -25,23 +25,27 @@ function addEventListeners() {
     initCustomCategoryFields();
 
     try {
+        
+        // Initialize schedule inputs
+        initScheduleInputs();
+        
         // Employee selectors
         safeBind('employee-select', 'change', handleEmployeeChange);
         safeBind('calendar-employee-select', 'change', handleCalendarEmployeeChange);
-        
+
         // Navigation buttons
         safeBind('prev-week', 'click', navigateToPreviousWeek);
         safeBind('next-week', 'click', navigateToNextWeek);
         safeBind('prev-month', 'click', navigateToPreviousMonth);
         safeBind('next-month', 'click', navigateToNextMonth);
-        
+
         // Action buttons
         safeBind('save-schedule', 'click', saveSchedule);
         safeBind('export-week', 'click', exportWeekToExcel);
         safeBind('add-employee', 'click', addEmployee);
         safeBind('save-settings', 'click', saveSettings);
         safeBind('add-bank-holiday', 'click', addBankHoliday);
-        
+
         // Currency selector
         safeBind('currency-select', 'change', function(e) {
             appState.settings.currency = e.target.value;
@@ -49,23 +53,20 @@ function addEventListeners() {
             renderEmployeesList();
             saveAppData();
         });
-        
+
         // Language selectors
         safeBind('header-language-select', 'change', function(e) {
             updateLanguage(e.target.value);
             const langSelect = document.getElementById('language-select');
             if (langSelect) langSelect.value = e.target.value;
         });
-        
+
         safeBind('language-select', 'change', function(e) {
             updateLanguage(e.target.value);
             const headerLangSelect = document.getElementById('header-language-select');
             if (headerLangSelect) headerLangSelect.value = e.target.value;
         });
-        
-        // Initialize schedule inputs
-        initScheduleInputs();
-        
+
         // Set up event delegation for bank holiday delete buttons
         const holidayList = document.getElementById('bank-holiday-list');
         if (holidayList) {
