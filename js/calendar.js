@@ -1,6 +1,7 @@
 // Calendar-related functions
 
 // Update calendar UI
+// Modyfikacja funkcji updateCalendarUI w calendar.js
 function updateCalendarUI() {
     console.log('Updating calendar...');
     try {
@@ -9,6 +10,9 @@ function updateCalendarUI() {
         if (monthDisplay) {
             monthDisplay.textContent = formatMonthYear(appState.currentMonth, appState.currentYear);
         }
+        
+        // Create or update the weekly summary panel
+        createOrUpdateWeeklySummaryPanel();
         
         // Get calendar table body
         const tableBody = document.getElementById('calendar-table-body');
@@ -91,7 +95,7 @@ function updateCalendarUI() {
                             // Add employee schedule to cell
                             cellContent += `
                                 <div class="employee-schedule">
-                                    <span class="employee-name">${employee.name}</span>
+                                    <span class="employee-name" data-employee-id="${employee.id}">${employee.name}</span>
                                     <span class="employee-hours">${formattedHours}</span>
                                 </div>
                             `;
@@ -110,6 +114,9 @@ function updateCalendarUI() {
             
             tableBody.appendChild(row);
         }
+        
+        // Highlight selected employee in calendar
+        highlightSelectedEmployee();
         
         console.log('Calendar updated successfully');
     } catch (error) {
