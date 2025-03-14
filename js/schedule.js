@@ -234,6 +234,32 @@ function updateWeekSummary() {
     document.getElementById('overtime-value').textContent = formatCurrency(overtimeValue);
     document.getElementById('payroll-value').textContent = formatCurrency(payroll);
     document.getElementById('total-value').textContent = formatCurrency(totalValue);
+
+    // Check if total value is negative and add/remove class accordingly
+    const totalValueElement = document.getElementById('total-value');
+    if (totalValue < 0) {
+        totalValueElement.classList.add('negative');
+    } else {
+        totalValueElement.classList.remove('negative');
+    }
+
+    // Check if regular value is negative (unlikely but for consistency)
+    const regularValueElement = document.getElementById('regular-value');
+    if (regularValue < 0) {
+        regularValueElement.classList.add('negative');
+    } else {
+        regularValueElement.classList.remove('negative');
+    }
+
+    // Check if overtime value is negative (unlikely but for consistency)
+    const overtimeValueElement = document.getElementById('overtime-value');
+    if (overtimeValue < 0) {
+        overtimeValueElement.classList.add('negative');
+    } else {
+        overtimeValueElement.classList.remove('negative');
+}
+
+
 }
 
 

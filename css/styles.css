@@ -524,7 +524,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 
 /* Style for custom category fields */
 .custom-category input[type="text"] {
-    width: 100%;
+    width: 75%;
     padding: 5px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -532,12 +532,12 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 .custom-category input[type="number"] {
-    width: 100%;
+    width: 25%;
     padding: 5px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     font-size: 14px;
-    text-align: right;
+    text-align: left;
 }
 
 /* Color for negative values */
@@ -549,4 +549,16 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 /* Ensure proper alignment in the table */
 .summary-table td input {
     margin: 0;
+}
+
+/* Make payroll value always red since it's subtracted from total */
+#payroll-value {
+    color: #ea4335;
+}
+
+/* Make any negative values in the value column appear red */
+#total-value.negative,
+#regular-value.negative,
+#overtime-value.negative {
+    color: #ea4335;
 }
