@@ -125,11 +125,27 @@ function initScheduleInputs() {
                 minuteSelect.value = String(roundedMin).padStart(2, '0');
             }
             
-            // Add event listeners to update original input
+            // W funkcji initScheduleInputs, zmodyfikuj część obsługi zdarzeń selektorów:
             const updateTime = () => {
                 const newTime = `${hourSelect.value}:${minuteSelect.value}`;
                 timeInput.value = newTime;
-                timeInput.dispatchEvent(new Event('change'));
+    
+                // Wyślij zdarzenie 'change' z flagą bubbles, aby zapewnić propagację
+                const event = new Event('change', { bubbles: true });
+                timeInput.dispatchEvent(event);
+    
+                // Bezpośrednio przelicz i zaktualizuj komórkę godzin
+                const startInput = document.querySelector(`.start-time[data-day="${dayIndex}"]`);
+                const endInput = document.querySelector(`.end-time[data-day="${dayIndex}"]`);
+                const hoursCell = document.querySelector(`.hours-cell[data-day="${dayIndex}"]`);
+    
+                if (startInput && endInput && startInput.value && endInput.value && hoursCell) {
+                    const hours = calculateHours(startInput.value, endInput.value);
+                    hoursCell.textContent = formatHoursForDisplay(hours);
+        
+                    // Bezpośrednio aktualizuj podsumowanie tygodnia
+                    updateWeekSummary();
+                }
             };
             
             hourSelect.addEventListener('change', updateTime);
