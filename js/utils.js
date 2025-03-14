@@ -152,8 +152,8 @@ function formatHoursForDisplay(timeStr) {
             return `${hours} hr`;
         }
         
-        // Otherwise show hours with fraction
-        return `${hours + (minutes / 60).toFixed(1)} hr`;
+        // Show hours and minutes properly formatted
+        return `${hours} hr ${minutes} min`;
     } catch (error) {
         console.error('Error formatting hours for display:', error);
         return '';
