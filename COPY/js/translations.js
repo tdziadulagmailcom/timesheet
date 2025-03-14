@@ -73,7 +73,6 @@ const translations = {
         'months': ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 
                   'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'],
         'bank-holiday': 'Dzień świąteczny',
-        'label-payment-due': 'Do wypłaty',
         'custom-category-1-placeholder': 'Dodatkowa kategoria 1',
         'custom-category-2-placeholder': 'Dodatkowa kategoria 2'
     },
@@ -83,7 +82,6 @@ const translations = {
         'custom-category-2-placeholder': 'Additional category 2',
         'label-employee-payroll': 'Payroll:',
         'label-payroll': 'Payroll',
-        'label-payment-due': 'To Pay',
         'invalid-payroll': 'Please enter a valid payroll amount.',
         'language-label': 'Language:',
         'tab-schedule': 'Schedule',

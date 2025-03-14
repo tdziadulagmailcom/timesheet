@@ -194,7 +194,6 @@ function calculateTotalHours() {
 }
 
 // Update week summary section
-// Update week summary section
 function updateWeekSummary() {
     const totalMinutes = calculateTotalHours();
     const regularHoursLimit = appState.settings.regularHoursLimit * 60; // Convert to minutes
@@ -222,7 +221,7 @@ function updateWeekSummary() {
     const rate = employee ? employee.rate : 0;
     const payroll = employee ? (employee.payroll || 0) : 0;
     
-    // Get custom category values
+    // Get custom category values - this was missing!
     const category1Value = parseFloat(document.getElementById('custom-category-value-1').value) || 0;
     const category2Value = parseFloat(document.getElementById('custom-category-value-2').value) || 0;
     
@@ -230,11 +229,8 @@ function updateWeekSummary() {
     const regularValue = (regularMinutes / 60) * rate;
     const overtimeValue = (overtimeMinutes / 60) * rate * appState.settings.overtimeRateMultiplier;
     
-    // Calculate total without subtracting payroll
-    const totalValue = regularValue + overtimeValue + category1Value + category2Value;
-    
-    // Calculate payment due (total minus payroll)
-    const paymentDueValue = totalValue - payroll;
+    // Calculate total (SUBTRACT payroll instead of adding it)
+    const totalValue = regularValue + overtimeValue - payroll + category1Value + category2Value;
     
     // Update the summary table
     document.getElementById('regular-hours').textContent = formatHoursFromMinutes(regularMinutes);
@@ -243,11 +239,10 @@ function updateWeekSummary() {
     
     document.getElementById('regular-value').textContent = formatCurrency(regularValue);
     document.getElementById('overtime-value').textContent = formatCurrency(overtimeValue);
-    document.getElementById('total-value').textContent = formatCurrency(totalValue);
     document.getElementById('payroll-value').textContent = formatCurrency(payroll);
-    document.getElementById('payment-due-value').textContent = formatCurrency(paymentDueValue);
+    document.getElementById('total-value').textContent = formatCurrency(totalValue);
 
-    // Check if values are negative and add/remove class accordingly
+    // Check if total value is negative and add/remove class accordingly
     const totalValueElement = document.getElementById('total-value');
     if (totalValue < 0) {
         totalValueElement.classList.add('negative');
@@ -255,13 +250,7 @@ function updateWeekSummary() {
         totalValueElement.classList.remove('negative');
     }
 
-    const paymentDueValueElement = document.getElementById('payment-due-value');
-    if (paymentDueValue < 0) {
-        paymentDueValueElement.classList.add('negative');
-    } else {
-        paymentDueValueElement.classList.remove('negative');
-    }
-
+    // Check if regular value is negative (unlikely but for consistency)
     const regularValueElement = document.getElementById('regular-value');
     if (regularValue < 0) {
         regularValueElement.classList.add('negative');
@@ -269,12 +258,15 @@ function updateWeekSummary() {
         regularValueElement.classList.remove('negative');
     }
 
+    // Check if overtime value is negative (unlikely but for consistency)
     const overtimeValueElement = document.getElementById('overtime-value');
     if (overtimeValue < 0) {
         overtimeValueElement.classList.add('negative');
     } else {
         overtimeValueElement.classList.remove('negative');
-    }
+}
+
+
 }
 
 
@@ -389,49 +381,42 @@ function exportWeekToExcel() {
     wsData.push(['', '', '', '', '']);
     
     // Add summary section
-const regularHours = document.getElementById('regular-hours').textContent;
-const overtimeHours = document.getElementById('overtime-hours').textContent;
-const totalHours = document.getElementById('total-hours').textContent;
-
-const regularValue = document.getElementById('regular-value').textContent;
-const overtimeValue = document.getElementById('overtime-value').textContent;
-const payrollValue = document.getElementById('payroll-value').textContent;
-const paymentDueValue = document.getElementById('payment-due-value').textContent;
-
-// Get custom category values
-const category1Name = document.getElementById('custom-category-1').value || (language === 'pl' ? 'Dodatkowa kategoria 1' : 'Additional category 1');
-const category2Name = document.getElementById('custom-category-2').value || (language === 'pl' ? 'Dodatkowa kategoria 2' : 'Additional category 2');
-const category1Value = parseFloat(document.getElementById('custom-category-value-1').value) || 0;
-const category2Value = parseFloat(document.getElementById('custom-category-value-2').value) || 0;
-
-// Format currency for Excel
-const category1Currency = formatCurrency(category1Value);
-const category2Currency = formatCurrency(category2Value);
-
-wsData.push([translations[language]['summary-title'], '', '', '', '']);
-wsData.push([
-    translations[language]['th-category'], 
-    '', 
-    translations[language]['th-summary-hours'], 
-    '', 
-    translations[language]['th-value']
-]);
-wsData.push([translations[language]['label-regular-hours'], '', regularHours, '', regularValue]);
-wsData.push([translations[language]['label-overtime-hours'], '', overtimeHours, '', overtimeValue]);
-
-// Add custom categories
-wsData.push([category1Name, '', '-', '', category1Currency]);
-wsData.push([category2Name, '', '-', '', category2Currency]);
-
-// Add total row
-wsData.push([translations[language]['label-total'], '', totalHours, '', totalValue]);
-
-// Add payroll row
-wsData.push([translations[language]['label-payroll'], '', '-', '', payrollValue]);
-
-// Add payment due row
-const paymentDueLabel = language === 'pl' ? 'Do wypłaty' : 'Payment due';
-wsData.push([paymentDueLabel, '', '-', '', paymentDueValue]);
+    const regularHours = document.getElementById('regular-hours').textContent;
+    const overtimeHours = document.getElementById('overtime-hours').textContent;
+    const totalHours = document.getElementById('total-hours').textContent;
+    
+    const regularValue = document.getElementById('regular-value').textContent;
+    const overtimeValue = document.getElementById('overtime-value').textContent;
+    const payrollValue = document.getElementById('payroll-value').textContent;
+    
+    // Get custom category values - Add this in the right place
+    const category1Name = document.getElementById('custom-category-1').value || (language === 'pl' ? 'Dodatkowa kategoria 1' : 'Additional category 1');
+    const category2Name = document.getElementById('custom-category-2').value || (language === 'pl' ? 'Dodatkowa kategoria 2' : 'Additional category 2');
+    const category1Value = parseFloat(document.getElementById('custom-category-value-1').value) || 0;
+    const category2Value = parseFloat(document.getElementById('custom-category-value-2').value) || 0;
+    
+    // Format currency for Excel
+    const category1Currency = formatCurrency(category1Value);
+    const category2Currency = formatCurrency(category2Value);
+    
+    wsData.push([translations[language]['summary-title'], '', '', '', '']);
+    wsData.push([
+        translations[language]['th-category'], 
+        '', 
+        translations[language]['th-summary-hours'], 
+        '', 
+        translations[language]['th-value']
+    ]);
+    wsData.push([translations[language]['label-regular-hours'], '', regularHours, '', regularValue]);
+    wsData.push([translations[language]['label-overtime-hours'], '', overtimeHours, '', overtimeValue]);
+    wsData.push([translations[language]['label-payroll'], '', '-', '', payrollValue]);
+    
+    // Add custom categories
+    wsData.push([category1Name, '', '-', '', category1Currency]);
+    wsData.push([category2Name, '', '-', '', category2Currency]);
+    
+    const totalValue = document.getElementById('total-value').textContent;
+    wsData.push([translations[language]['label-total'], '', totalHours, '', totalValue]);
     
     // Rest of the function...
     // Create worksheet and add to workbook
