@@ -102,6 +102,10 @@ const translations = {
         'payments-empty-message': 'Brak płatności w wybranym okresie.',
         'invalid-date-range': 'Proszę wybrać prawidłowy zakres dat.',
         'invalid-date-order': 'Data końcowa nie może być wcześniejsza niż data początkowa.',
+        'unlock-schedule': 'Odblokuj harmonogram',
+        'schedule-locked': 'Harmonogram zablokowany (używane są zapisane stawki)',
+        'schedule-unlocked': 'Harmonogram został odblokowany.',
+        'confirm-unlock-schedule': 'Czy na pewno chcesz odblokować ten harmonogram? Aktualne stawki zostaną zastosowane.',
         'invalid-holiday-days': 'Proszę podać prawidłową liczbę dni urlopowych.'
     },
     en: {
@@ -109,6 +113,10 @@ const translations = {
         'custom-category-1-placeholder': 'Additional category 1',
         'custom-category-2-placeholder': 'Additional category 2',
         'tab-payments': 'Payments',
+        'unlock-schedule': 'Unlock Schedule',
+        'schedule-locked': 'Schedule locked (saved rates are used)',
+        'schedule-unlocked': 'Schedule has been unlocked.',
+        'confirm-unlock-schedule': 'Are you sure you want to unlock this schedule? Current rates will be applied.',
         'label-payment-employee': 'Employee:',
         'all-employees': 'All employees',
         'label-payment-year': 'Year:',

@@ -48,6 +48,9 @@ function addEventListeners() {
         safeBind('save-settings', 'click', saveSettings);
         safeBind('add-bank-holiday', 'click', addBankHoliday);
 
+        // Dodaj obsługę przycisku odblokowywania harmonogramu
+        safeBind('unlock-schedule', 'click', unlockSchedule);
+
         // Currency selector
         safeBind('currency-select', 'change', function(e) {
             appState.settings.currency = e.target.value;

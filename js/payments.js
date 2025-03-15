@@ -214,7 +214,6 @@ function collectPaymentsForDateRange(startDate, endDate) {
     
     return payments;
 }
-
 // Oblicz sumę do wypłaty dla danego pracownika w danym tygodniu
 function calculatePaymentDueForWeek(employeeId, weekStart) {
     try {
@@ -238,8 +237,14 @@ function calculatePaymentDueForWeek(employeeId, weekStart) {
         const employee = appState.employees.find(emp => emp.id === employeeId);
         if (!employee) return 0;
         
-        const rate = employee.rate;
-        const payroll = employee.payroll || 0;
+        // Użyj zapisanej stawki i payroll, jeśli harmonogram jest zablokowany
+        let rate = employee.rate;
+        let payroll = employee.payroll || 0;
+        
+        if (appState.schedule[weekKey] && appState.schedule[weekKey].locked) {
+            rate = appState.schedule[weekKey].savedRate || rate;
+            payroll = appState.schedule[weekKey].savedPayroll || payroll;
+        }
         
         // Dla każdego dnia w tygodniu
         for (let i = 0; i < 7; i++) {
@@ -251,13 +256,19 @@ function calculatePaymentDueForWeek(employeeId, weekStart) {
             const daySchedule = appState.schedule[scheduleKey];
             
             if (daySchedule) {
+                // Użyj zapisanej stawki dla tego dnia, jeśli jest zablokowany
+                let dayRate = rate;
+                if (daySchedule.locked && daySchedule.savedRate) {
+                    dayRate = daySchedule.savedRate;
+                }
+                
                 // Sprawdź typ dnia
                 if (daySchedule.type === 'Holiday') {
                     const baseHours = daySchedule.fixedHours || getBaseHoursForEmployee(employeeId, true);
-                    totalHolidayValue += baseHours * rate;
+                    totalHolidayValue += baseHours * dayRate;
                 } else if (daySchedule.type === 'Bank Holiday') {
                     const baseHours = daySchedule.fixedHours || getBaseHoursForEmployee(employeeId, true);
-                    totalBankHolidayValue += baseHours * rate;
+                    totalBankHolidayValue += baseHours * dayRate;
                 } else if (daySchedule.start && daySchedule.end) {
                     // Standardowy dzień pracy
                     const hoursStr = calculateHours(daySchedule.start, daySchedule.end);
@@ -267,16 +278,16 @@ function calculatePaymentDueForWeek(employeeId, weekStart) {
                         
                         // Dodaj do standardowych lub nadgodzin
                         const regularHoursLimit = appState.settings.regularHoursLimit;
-                        const regularHoursSoFar = totalRegularValue / rate;
+                        const regularHoursSoFar = totalRegularValue / dayRate;
                         
                         if (regularHoursSoFar + decimalHours <= regularHoursLimit) {
-                            totalRegularValue += decimalHours * rate;
+                            totalRegularValue += decimalHours * dayRate;
                         } else {
                             const remainingRegularHours = Math.max(0, regularHoursLimit - regularHoursSoFar);
                             const overtimeHours = decimalHours - remainingRegularHours;
                             
-                            totalRegularValue += remainingRegularHours * rate;
-                            totalOvertimeValue += overtimeHours * rate * appState.settings.overtimeRateMultiplier;
+                            totalRegularValue += remainingRegularHours * dayRate;
+                            totalOvertimeValue += overtimeHours * dayRate * appState.settings.overtimeRateMultiplier;
                         }
                     }
                 }
@@ -296,7 +307,7 @@ function calculatePaymentDueForWeek(employeeId, weekStart) {
         
         // Oblicz całkowitą wartość
         const totalValue = totalRegularValue + totalOvertimeValue + totalHolidayValue + 
-                          totalBankHolidayValue + customCategory1Value + customCategory2Value;
+                           totalBankHolidayValue + customCategory1Value + customCategory2Value;
         
         // Odejmij payroll
         const paymentDue = totalValue - payroll;
@@ -307,6 +318,7 @@ function calculatePaymentDueForWeek(employeeId, weekStart) {
         return 0;
     }
 }
+
 
 // Wczytaj zapisane statusy płatności
 function loadPaymentStatuses() {

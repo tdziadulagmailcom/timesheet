@@ -339,10 +339,37 @@ function updateWeekSummary() {
         let holidayHoursTotal = 0;
         let bankHolidayHoursTotal = 0;
         
+        // Sprawdź, czy dla bieżącego tygodnia mamy zapisane wartości stawki i payroll
+        const weekStart = formatDate(appState.currentWeekStart);
+        const weekKey = `${appState.currentEmployeeId}_week_${weekStart}`;
+        const weekData = appState.schedule[weekKey];
+        
         // Pobierz informację o pracowniku
         const employee = appState.employees.find(emp => emp.id === Number(appState.currentEmployeeId));
-        const rate = employee ? employee.rate : 0;
-        const payroll = employee ? (employee.payroll || 0) : 0;
+        
+        // Użyj zapisanej stawki i payroll, jeśli harmonogram jest zablokowany, w przeciwnym razie użyj aktualnych
+        let rate = employee ? employee.rate : 0;
+        let payroll = employee ? (employee.payroll || 0) : 0;
+        
+        if (weekData && weekData.locked) {
+            rate = weekData.savedRate || rate;
+            payroll = weekData.savedPayroll || payroll;
+            
+            // Aktualizuj UI, aby pokazać, że harmonogram jest zablokowany
+            const lockIndicator = document.getElementById('schedule-lock-indicator');
+            if (lockIndicator) {
+                lockIndicator.classList.remove('hidden');
+                lockIndicator.textContent = appState.settings.language === 'pl' ? 
+                    'Harmonogram zablokowany (używane są zapisane stawki)' : 
+                    'Schedule locked (saved rates are used)';
+            }
+        } else {
+            // Schowaj wskaźnik blokady
+            const lockIndicator = document.getElementById('schedule-lock-indicator');
+            if (lockIndicator) {
+                lockIndicator.classList.add('hidden');
+            }
+        }
         
         // Przeszukaj harmonogram dla bieżącego tygodnia
         for (let i = 0; i < 7; i++) {
@@ -350,28 +377,36 @@ function updateWeekSummary() {
             const dateString = formatDate(date);
             const scheduleKey = `${appState.currentEmployeeId}_${dateString}`;
             
-            if (appState.schedule[scheduleKey] && appState.schedule[scheduleKey].type) {
-                if (appState.schedule[scheduleKey].type === 'Holiday') {
-                    holidayDays++;
-                    if (appState.schedule[scheduleKey].fixedHours) {
-                        holidayHoursTotal += appState.schedule[scheduleKey].fixedHours;
-                    } else {
-                        // Jeśli nie ma zapisanej wartości fixedHours, obliczamy ją i zapisujemy
-                        const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
-                        appState.schedule[scheduleKey].fixedHours = baseHours;
-                        holidayHoursTotal += baseHours;
-                        saveAppData(); // Zapisz zmiany
-                    }
-                } else if (appState.schedule[scheduleKey].type === 'Bank Holiday') {
-                    bankHolidayDays++;
-                    if (appState.schedule[scheduleKey].fixedHours) {
-                        bankHolidayHoursTotal += appState.schedule[scheduleKey].fixedHours;
-                    } else {
-                        // Jeśli nie ma zapisanej wartości fixedHours, obliczamy ją i zapisujemy
-                        const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
-                        appState.schedule[scheduleKey].fixedHours = baseHours;
-                        bankHolidayHoursTotal += baseHours;
-                        saveAppData(); // Zapisz zmiany
+            if (appState.schedule[scheduleKey]) {
+                // Sprawdź, czy mamy zapisaną stawkę dla tego dnia i czy jest zablokowany
+                if (appState.schedule[scheduleKey].locked && appState.schedule[scheduleKey].savedRate) {
+                    // Użyj zapisanej stawki dla tego konkretnego dnia
+                    rate = appState.schedule[scheduleKey].savedRate;
+                }
+                
+                if (appState.schedule[scheduleKey].type) {
+                    if (appState.schedule[scheduleKey].type === 'Holiday') {
+                        holidayDays++;
+                        if (appState.schedule[scheduleKey].fixedHours) {
+                            holidayHoursTotal += appState.schedule[scheduleKey].fixedHours;
+                        } else {
+                            // Jeśli nie ma zapisanej wartości fixedHours, obliczamy ją i zapisujemy
+                            const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
+                            appState.schedule[scheduleKey].fixedHours = baseHours;
+                            holidayHoursTotal += baseHours;
+                            saveAppData(); // Zapisz zmiany
+                        }
+                    } else if (appState.schedule[scheduleKey].type === 'Bank Holiday') {
+                        bankHolidayDays++;
+                        if (appState.schedule[scheduleKey].fixedHours) {
+                            bankHolidayHoursTotal += appState.schedule[scheduleKey].fixedHours;
+                        } else {
+                            // Jeśli nie ma zapisanej wartości fixedHours, obliczamy ją i zapisujemy
+                            const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
+                            appState.schedule[scheduleKey].fixedHours = baseHours;
+                            bankHolidayHoursTotal += baseHours;
+                            saveAppData(); // Zapisz zmiany
+                        }
                     }
                 }
             }
@@ -415,6 +450,60 @@ function updateWeekSummary() {
         console.error('Error updating week summary:', error);
     }
 }
+
+// Funkcja do odblokowywania harmonogramu
+function unlockSchedule() {
+    const language = appState.settings.language;
+    
+    // Sprawdź, czy hasło do resetowania jest ustawione
+    if (!appState.settings.resetPassword) {
+        alert(language === 'pl' ? 'Hasło do resetowania nie zostało ustawione w opcjach.' : 'Reset password is not set in options.');
+        return;
+    }
+    
+    // Poproś o hasło
+    const enteredPassword = prompt(translations[language]['enter-reset-password']);
+    
+    // Sprawdź, czy hasło jest poprawne
+    if (enteredPassword !== appState.settings.resetPassword) {
+        alert(translations[language]['invalid-reset-password']);
+        return;
+    }
+    
+    // Potwierdź odblokowanie
+    if (!confirm(language === 'pl' ? 'Czy na pewno chcesz odblokować ten harmonogram? Aktualne stawki zostaną zastosowane.' : 
+                'Are you sure you want to unlock this schedule? Current rates will be applied.')) {
+        return;
+    }
+    
+    // Odblokuj harmonogram na bieżący tydzień
+    const weekStart = formatDate(appState.currentWeekStart);
+    const weekKey = `${appState.currentEmployeeId}_week_${weekStart}`;
+    
+    if (appState.schedule[weekKey]) {
+        appState.schedule[weekKey].locked = false;
+    }
+    
+    // Odblokuj każdy dzień w tygodniu
+    for (let i = 0; i < 7; i++) {
+        const date = getDateForDay(i);
+        const dateString = formatDate(date);
+        const scheduleKey = `${appState.currentEmployeeId}_${dateString}`;
+        
+        if (appState.schedule[scheduleKey]) {
+            appState.schedule[scheduleKey].locked = false;
+        }
+    }
+    
+    // Zapisz zmiany
+    saveAppData();
+    
+    // Aktualizuj UI
+    updateScheduleUI();
+    
+    // Pokaż potwierdzenie
+    alert(language === 'pl' ? 'Harmonogram został odblokowany.' : 'Schedule has been unlocked.');
+}
 // 2. Add event listeners for the custom category value fields
 
 function initCustomCategoryFields() {
@@ -453,10 +542,17 @@ function saveSchedule() {
         
         // Only save if both start and end times are set or if a type is selected
         if ((startInput && startInput.value && endInput && endInput.value) || selectedType) {
+            // Znajdź bieżące dane pracownika
+            const employee = appState.employees.find(emp => emp.id === Number(appState.currentEmployeeId));
+            
             appState.schedule[scheduleKey] = {
                 start: startInput && startInput.value ? startInput.value : '',
                 end: endInput && endInput.value ? endInput.value : '',
-                type: selectedType
+                type: selectedType,
+                // Zapisz stawkę i payroll z momentu utworzenia harmonogramu
+                savedRate: employee ? employee.rate : 0,
+                savedPayroll: employee ? (employee.payroll || 0) : 0,
+                locked: true // Domyślnie zablokowany po zapisaniu
             };
         } else if (appState.schedule[scheduleKey]) {
             // Remove entry if times are cleared and no type is selected
@@ -474,7 +570,10 @@ function saveSchedule() {
     const weekStart = formatDate(appState.currentWeekStart);
     const weekKey = `${appState.currentEmployeeId}_week_${weekStart}`;
     
-    // Zapisz kategorie w appState
+    // Znajdź bieżące dane pracownika
+    const employee = appState.employees.find(emp => emp.id === Number(appState.currentEmployeeId));
+    
+    // Zapisz kategorie w appState wraz ze stawką i payroll
     appState.schedule[weekKey] = {
         category1: {
             name: category1Name,
@@ -483,7 +582,10 @@ function saveSchedule() {
         category2: {
             name: category2Name,
             value: category2Value
-        }
+        },
+        savedRate: employee ? employee.rate : 0,
+        savedPayroll: employee ? (employee.payroll || 0) : 0,
+        locked: true // Domyślnie zablokowany po zapisaniu
     };
     
     // Save to localStorage
