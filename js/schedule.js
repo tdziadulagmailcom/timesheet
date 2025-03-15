@@ -259,10 +259,9 @@ function calculateTotalHours() {
         
         const selectedType = typeSelect ? typeSelect.value : '';
         
+        // Dla typów Holiday/Bank Holiday nie dodajemy godzin
         if (selectedType === 'Holiday' || selectedType === 'Bank Holiday') {
-            // Dla typów Holiday/Bank Holiday używamy średniej dziennej
-            const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
-            totalMinutes += baseHours * 60; // Konwersja na minuty
+            // Traktujemy jako 0 godzin - nie dodajemy nic do totalMinutes
         } else if (startInput && endInput && startInput.value && endInput.value) {
             // Standardowe wyliczanie
             const hours = calculateHours(startInput.value, endInput.value);
@@ -276,7 +275,20 @@ function calculateTotalHours() {
     return totalMinutes;
 }
 
-// Update week summary section
+// Funkcja do liczenia dni z określonym typem w bieżącym tygodniu
+function countDaysWithType(type) {
+    let count = 0;
+    
+    for (let i = 0; i < 7; i++) {
+        const typeSelect = document.querySelector(`.type-select[data-day="${i}"]`);
+        if (typeSelect && typeSelect.value === type) {
+            count++;
+        }
+    }
+    
+    return count;
+}
+
 // Update week summary section
 function updateWeekSummary() {
     const totalMinutes = calculateTotalHours();
@@ -300,10 +312,19 @@ function updateWeekSummary() {
         return `${h} hr ${m} min`;
     };
     
+    // Policz dni Holiday i Bank Holiday
+    const holidayDays = countDaysWithType('Holiday');
+    const bankHolidayDays = countDaysWithType('Bank Holiday');
+    
     // Get employee rate and payroll
     const employee = appState.employees.find(emp => emp.id === Number(appState.currentEmployeeId));
     const rate = employee ? employee.rate : 0;
     const payroll = employee ? (employee.payroll || 0) : 0;
+    
+    // Oblicz wartość za dni Holiday i Bank Holiday (zakładamy 8h na dzień)
+    const holidayHoursPerDay = 8; // standardowo 8h za dzień urlopu
+    const holidayValue = holidayDays * holidayHoursPerDay * rate;
+    const bankHolidayValue = bankHolidayDays * holidayHoursPerDay * rate;
     
     // Get custom category values
     const category1Value = parseFloat(document.getElementById('custom-category-value-1').value) || 0;
@@ -313,8 +334,8 @@ function updateWeekSummary() {
     const regularValue = (regularMinutes / 60) * rate;
     const overtimeValue = (overtimeMinutes / 60) * rate * appState.settings.overtimeRateMultiplier;
     
-    // Calculate total without subtracting payroll
-    const totalValue = regularValue + overtimeValue + category1Value + category2Value;
+    // Calculate total without subtracting payroll, dodaj wartości za Holiday i Bank Holiday
+    const totalValue = regularValue + overtimeValue + holidayValue + bankHolidayValue + category1Value + category2Value;
     
     // Calculate payment due (total minus payroll)
     const paymentDueValue = totalValue - payroll;
@@ -322,6 +343,13 @@ function updateWeekSummary() {
     // Update the summary table
     document.getElementById('regular-hours').textContent = formatHoursFromMinutes(regularMinutes);
     document.getElementById('overtime-hours').textContent = formatHoursFromMinutes(overtimeMinutes);
+    
+    // Aktualizuj dni i wartości Holiday i Bank Holiday
+    document.getElementById('holiday-days').textContent = holidayDays;
+    document.getElementById('bank-holiday-days').textContent = bankHolidayDays;
+    document.getElementById('holiday-value').textContent = formatCurrency(holidayValue);
+    document.getElementById('bank-holiday-value').textContent = formatCurrency(bankHolidayValue);
+    
     document.getElementById('total-hours').textContent = formatHoursFromMinutes(totalMinutes);
     
     document.getElementById('regular-value').textContent = formatCurrency(regularValue);
@@ -488,28 +516,37 @@ function exportWeekToExcel() {
     // Add empty row before summary
     wsData.push(['', '', '', '', '']);
     
+    // Policz dni Holiday i Bank Holiday
+    const holidayDays = countDaysWithType('Holiday');
+    const bankHolidayDays = countDaysWithType('Bank Holiday');
+
+    // Oblicz wartość za dni Holiday i Bank Holiday
+    const holidayHoursPerDay = 8; // standardowo 8h za dzień urlopu
+    const holidayValue = holidayDays * holidayHoursPerDay * rate;
+    const bankHolidayValue = bankHolidayDays * holidayHoursPerDay * rate;
+
     // Add summary section
-const regularHours = document.getElementById('regular-hours').textContent;
-const overtimeHours = document.getElementById('overtime-hours').textContent;
-const totalHours = document.getElementById('total-hours').textContent;
+    const regularHours = document.getElementById('regular-hours').textContent;
+    const overtimeHours = document.getElementById('overtime-hours').textContent;
+    const totalHours = document.getElementById('total-hours').textContent;
 
-const regularValue = document.getElementById('regular-value').textContent;
-const overtimeValue = document.getElementById('overtime-value').textContent;
-const payrollValue = document.getElementById('payroll-value').textContent;
-const paymentDueValue = document.getElementById('payment-due-value').textContent;
+    const regularValue = document.getElementById('regular-value').textContent;
+    const overtimeValue = document.getElementById('overtime-value').textContent;
+    const payrollValue = document.getElementById('payroll-value').textContent;
+    const paymentDueValue = document.getElementById('payment-due-value').textContent;
 
-// Get custom category values
-const category1Name = document.getElementById('custom-category-1').value || (language === 'pl' ? 'Dodatkowa kategoria 1' : 'Additional category 1');
-const category2Name = document.getElementById('custom-category-2').value || (language === 'pl' ? 'Dodatkowa kategoria 2' : 'Additional category 2');
-const category1Value = parseFloat(document.getElementById('custom-category-value-1').value) || 0;
-const category2Value = parseFloat(document.getElementById('custom-category-value-2').value) || 0;
+    // Get custom category values
+    const category1Name = document.getElementById('custom-category-1').value || (language === 'pl' ? 'Dodatkowa kategoria 1' : 'Additional category 1');
+    const category2Name = document.getElementById('custom-category-2').value || (language === 'pl' ? 'Dodatkowa kategoria 2' : 'Additional category 2');
+    const category1Value = parseFloat(document.getElementById('custom-category-value-1').value) || 0;
+    const category2Value = parseFloat(document.getElementById('custom-category-value-2').value) || 0;
 
-// Format currency for Excel
-const category1Currency = formatCurrency(category1Value);
-const category2Currency = formatCurrency(category2Value);
+    // Format currency for Excel
+    const category1Currency = formatCurrency(category1Value);
+    const category2Currency = formatCurrency(category2Value);
 
-wsData.push([translations[language]['summary-title'], '', '', '', '']);
-wsData.push([
+    wsData.push([translations[language]['summary-title'], '', '', '', '']);
+    wsData.push([
     translations[language]['th-category'], 
     '', 
     translations[language]['th-summary-hours'], 
@@ -518,6 +555,8 @@ wsData.push([
 ]);
 wsData.push([translations[language]['label-regular-hours'], '', regularHours, '', regularValue]);
 wsData.push([translations[language]['label-overtime-hours'], '', overtimeHours, '', overtimeValue]);
+wsData.push([translations[language]['label-holiday-hours'] || 'Holiday', '', holidayDays, '', formatCurrency(holidayValue)]);
+wsData.push([translations[language]['label-bank-holiday-hours'] || 'Bank Holiday', '', bankHolidayDays, '', formatCurrency(bankHolidayValue)]);
 
 // Add custom categories
 wsData.push([category1Name, '', '-', '', category1Currency]);
@@ -585,22 +624,19 @@ function updateTypeForDay(event) {
                 row.classList.add('bank-holiday');
             }
             
-            // Aktualizuj wyświetlane godziny po zmianie typu
+            // Zaktualizuj pola start i end oraz wyświetlane godziny po zmianie typu
             const hoursCell = row.querySelector(`.hours-cell`);
             const startInput = row.querySelector(`.start-time`);
             const endInput = row.querySelector(`.end-time`);
             
             if (hoursCell) {
                 if (selectedType === 'Holiday' || selectedType === 'Bank Holiday') {
-                    const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
-                    const hours = Math.floor(baseHours);
-                    const minutes = Math.round((baseHours - hours) * 60);
+                    // Wyzeruj pola start i end
+                    if (startInput) startInput.value = '';
+                    if (endInput) endInput.value = '';
                     
-                    if (minutes === 0) {
-                        hoursCell.textContent = `${hours} hr`;
-                    } else {
-                        hoursCell.textContent = `${hours} hr ${minutes} min`;
-                    }
+                    // Wyświetl "- -" zamiast godzin
+                    hoursCell.textContent = "- -";
                 } else if (startInput && endInput && startInput.value && endInput.value) {
                     // Standardowe obliczanie godzin
                     const hours = calculateHours(startInput.value, endInput.value);
