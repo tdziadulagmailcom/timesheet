@@ -11,7 +11,7 @@ function updateCalendarUI() {
         }
         
         // Create or update the weekly summary panel
-        createOrUpdateWeeklySummaryPanel();
+        createOrUpdateMonthlySummaryPanel();
         
         // Get calendar table body
         const tableBody = document.getElementById('calendar-table-body');
@@ -175,8 +175,8 @@ function updateCalendarUI() {
 
 // Pozostałe funkcje kalendarza pozostają bez zmian
 
-// Funkcja do tworzenia lub aktualizacji panelu podsumowania tygodniowego
-function createOrUpdateWeeklySummaryPanel() {
+// Funkcja do tworzenia lub aktualizacji panelu podsumowania miesięcznego
+function createOrUpdateMonthlySummaryPanel() {
     try {
         // Sprawdź czy kontener treści kalendarza istnieje, jeśli nie, utwórz go
         let contentWrapper = document.querySelector('.calendar-content');
@@ -219,23 +219,29 @@ function createOrUpdateWeeklySummaryPanel() {
         }
         
         // Sprawdź czy panel podsumowania istnieje, jeśli nie, utwórz go
-        let summaryPanel = document.querySelector('.weekly-summary-panel');
+        let summaryPanel = document.querySelector('.monthly-summary-panel');
         if (!summaryPanel) {
+            // Usuń stary panel podsumowania tygodniowego, jeśli istnieje
+            const oldPanel = document.querySelector('.weekly-summary-panel');
+            if (oldPanel) {
+                oldPanel.remove();
+            }
+            
             // Utwórz panel podsumowania
             summaryPanel = document.createElement('div');
-            summaryPanel.className = 'weekly-summary-panel';
+            summaryPanel.className = 'monthly-summary-panel';
             
             // Utwórz tytuł
             const title = document.createElement('div');
-            title.className = 'weekly-summary-title';
-            title.id = 'weekly-summary-title';
+            title.className = 'monthly-summary-title';
+            title.id = 'monthly-summary-title';
             const language = appState.settings.language || 'pl';
-            title.textContent = language === 'pl' ? 'Podsumowanie tygodniowe' : 'Weekly Summary';
+            title.textContent = language === 'pl' ? 'Podsumowanie miesięczne' : 'Monthly Summary';
             
             // Utwórz listę
             const list = document.createElement('div');
-            list.className = 'weekly-summary-list';
-            list.id = 'weekly-summary-list';
+            list.className = 'monthly-summary-list';
+            list.id = 'monthly-summary-list';
             
             // Złóż panel
             summaryPanel.appendChild(title);
@@ -250,17 +256,17 @@ function createOrUpdateWeeklySummaryPanel() {
             }
         }
         
-        // Aktualizuj zawartość podsumowania tygodniowego
-        updateWeeklySummary();
+        // Aktualizuj zawartość podsumowania miesięcznego
+        updateMonthlySummary();
     } catch (error) {
         console.error('Błąd podczas tworzenia panelu podsumowania:', error);
     }
 }
 
-// Funkcja do aktualizacji podsumowania tygodniowego
-function updateWeeklySummary() {
+// Funkcja do aktualizacji podsumowania miesięcznego
+function updateMonthlySummary() {
     try {
-        const list = document.getElementById('weekly-summary-list');
+        const list = document.getElementById('monthly-summary-list');
         if (!list) return;
         
         list.innerHTML = '';
@@ -272,75 +278,120 @@ function updateWeeklySummary() {
         // Pobierz ID wybranego pracownika
         const selectedEmployeeId = Number(document.getElementById('calendar-employee-select').value);
         
-        // Oblicz daty początku i końca dla każdego tygodnia miesiąca
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        
-        // Utwórz tablicę dat początku tygodnia (poniedziałków)
-        const weekStarts = [];
-        let currentDate = new Date(firstDay);
-        
-        // Znajdź poniedziałek na lub przed 1-ym dniem miesiąca
-        const dayOfWeek = currentDate.getDay() || 7; // 0 to niedziela, traktujemy jako 7
-        currentDate.setDate(currentDate.getDate() - dayOfWeek + 1); // Przesuń do poprzedniego poniedziałku
-        
-        // Dodaj wszystkie poniedziałki, które wypadają w miesiącu lub tuż przed nim
-        while (currentDate <= lastDay) {
-            weekStarts.push(new Date(currentDate));
-            currentDate.setDate(currentDate.getDate() + 7);
-        }
-        
-        // Dla każdego tygodnia oblicz całkowitą liczbę godzin dla każdego pracownika
+        // Nagłówek miesiąca
         const language = appState.settings.language || 'pl';
+        const monthName = translations[language]['months'][month];
         
-        weekStarts.forEach(weekStart => {
-            // Utwórz datę końca tygodnia (niedziela)
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekStart.getDate() + 6);
+        const monthHeader = document.createElement('div');
+        monthHeader.className = 'monthly-summary-header';
+        monthHeader.textContent = language === 'pl' ? `Miesiąc: ${monthName} ${year}` : `Month: ${monthName} ${year}`;
+        list.appendChild(monthHeader);
+        
+        // Oblicz statystyki dla każdego pracownika
+        appState.employees.forEach(employee => {
+            // Oblicz statystyki miesięczne dla pracownika
+            const stats = calculateEmployeeMonthStats(employee.id, month, year);
             
-            // Pomiń tygodnie całkowicie poza miesiącem
-            if (weekEnd.getMonth() < month && weekEnd.getFullYear() <= year) return;
-            if (weekStart.getMonth() > month && weekStart.getFullYear() >= year) return;
-            
-            // Pobierz zakres tygodnia do wyświetlenia
-            const weekRange = `${formatDateForDisplay(weekStart)} - ${formatDateForDisplay(weekEnd)}`;
-            
-            // Dodaj nagłówek tygodnia
-            const weekHeader = document.createElement('div');
-            weekHeader.className = 'weekly-summary-header';
-            weekHeader.textContent = language === 'pl' ? `Tydzień: ${weekRange}` : `Week: ${weekRange}`;
-            list.appendChild(weekHeader);
-            
-            // Oblicz godziny dla każdego pracownika
-            appState.employees.forEach(employee => {
-                const employeeHours = calculateEmployeeWeekHours(employee.id, weekStart, weekEnd);
-                if (employeeHours > 0) {
-                    // Utwórz wiersz pracownika
-                    const item = document.createElement('div');
-                    item.className = 'weekly-summary-item';
-                    
-                    // Podświetl, jeśli to wybrany pracownik
-                    if (employee.id === selectedEmployeeId) {
-                        item.classList.add('highlighted');
-                    }
-                    
-                    const nameSpan = document.createElement('span');
-                    nameSpan.className = 'weekly-summary-name';
-                    nameSpan.textContent = employee.name;
-                    
-                    const hoursSpan = document.createElement('span');
-                    hoursSpan.className = 'weekly-summary-hours';
-                    hoursSpan.textContent = `${employeeHours.toFixed(1)} h`;
-                    
-                    item.appendChild(nameSpan);
-                    item.appendChild(hoursSpan);
-                    list.appendChild(item);
+            // Jeśli pracownik ma jakieś dni pracy lub specjalne dni w miesiącu, pokaż go
+            if (stats.totalHours > 0 || stats.holidayDays > 0 || stats.bankHolidayDays > 0 || stats.sickDays > 0) {
+                // Utwórz wiersz pracownika
+                const item = document.createElement('div');
+                item.className = 'monthly-summary-item';
+                
+                // Podświetl, jeśli to wybrany pracownik
+                if (employee.id === selectedEmployeeId) {
+                    item.classList.add('highlighted');
                 }
-            });
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'monthly-summary-name';
+                nameSpan.textContent = employee.name;
+                
+                const statsDiv = document.createElement('div');
+                statsDiv.className = 'monthly-summary-stats';
+                
+                // Godziny pracy
+                const hoursSpan = document.createElement('span');
+                hoursSpan.className = 'monthly-summary-hours monthly-summary-stat';
+                const hoursLabel = language === 'pl' ? 'Suma godzin: ' : 'Total hours: ';
+                hoursSpan.textContent = `${hoursLabel}${stats.totalHours.toFixed(1)} h`;
+                
+                // Holiday
+                const holidaySpan = document.createElement('span');
+                holidaySpan.className = 'monthly-summary-holiday monthly-summary-stat';
+                holidaySpan.textContent = `Holiday: ${stats.holidayDays}`;
+                
+                // Bank Holiday
+                const bankHolidaySpan = document.createElement('span');
+                bankHolidaySpan.className = 'monthly-summary-bank-holiday monthly-summary-stat';
+                bankHolidaySpan.textContent = `Bank Holiday: ${stats.bankHolidayDays}`;
+                
+                // Sick
+                const sickSpan = document.createElement('span');
+                sickSpan.className = 'monthly-summary-sick monthly-summary-stat';
+                sickSpan.textContent = `Sick: ${stats.sickDays}`;
+                
+                statsDiv.appendChild(hoursSpan);
+                statsDiv.appendChild(holidaySpan);
+                statsDiv.appendChild(bankHolidaySpan);
+                statsDiv.appendChild(sickSpan);
+                
+                item.appendChild(nameSpan);
+                item.appendChild(statsDiv);
+                list.appendChild(item);
+            }
         });
     } catch (error) {
-        console.error('Błąd podczas aktualizacji podsumowania tygodniowego:', error);
+        console.error('Błąd podczas aktualizacji podsumowania miesięcznego:', error);
     }
+}
+
+// Funkcja do obliczania statystyk pracownika w miesiącu
+function calculateEmployeeMonthStats(employeeId, month, year) {
+    // Inicjalizacja statystyk
+    const stats = {
+        totalHours: 0,
+        holidayDays: 0,
+        bankHolidayDays: 0,
+        sickDays: 0
+    };
+    
+    // Pobierz pierwszy i ostatni dzień miesiąca
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    // Inicjalizacja daty bieżącej
+    const currentDate = new Date(firstDay);
+    
+    // Pętla przez każdy dzień miesiąca
+    while (currentDate <= lastDay) {
+        const dateString = formatDate(currentDate);
+        const scheduleKey = `${employeeId}_${dateString}`;
+        const daySchedule = appState.schedule[scheduleKey];
+        
+        if (daySchedule) {
+            // Sprawdź typ dnia
+            if (daySchedule.type === 'Holiday') {
+                stats.holidayDays++;
+            } else if (daySchedule.type === 'Bank Holiday') {
+                stats.bankHolidayDays++;
+            } else if (daySchedule.type === 'Sick') {
+                stats.sickDays++;
+            } else if (daySchedule.start && daySchedule.end) {
+                // Oblicz godziny dla standardowego dnia pracy
+                const hoursStr = calculateHours(daySchedule.start, daySchedule.end);
+                if (hoursStr) {
+                    const [hours, minutes] = hoursStr.split(':').map(Number);
+                    stats.totalHours += hours + (minutes / 60);
+                }
+            }
+        }
+        
+        // Przejdź do następnego dnia
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return stats;
 }
 
 // Funkcja do obliczania godzin pracownika w tygodniu
@@ -401,8 +452,8 @@ function handleCalendarEmployeeChange(event) {
     console.log('Zmieniony pracownik w kalendarzu');
     appState.currentEmployeeId = Number(event.target.value);
     
-    // Aktualizuj podsumowanie tygodniowe i podświetlenie wybranego pracownika
-    updateWeeklySummary();
+    // Aktualizuj podsumowanie miesięczne i podświetlenie wybranego pracownika
+    updateMonthlySummary();
     highlightSelectedEmployee();
 }
 

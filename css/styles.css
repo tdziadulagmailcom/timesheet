@@ -695,3 +695,90 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     padding: 2px 4px;
     border-radius: 3px;
 }
+
+/* Style dla panelu podsumowania miesięcznego */
+.monthly-summary-panel {
+    width: 50%; /* Zmniejszenie szerokości o 50% */
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 15px;
+    margin-top: 20px;
+    margin-left: auto; /* Wycentrowanie panelu */
+    margin-right: auto;
+}
+
+.monthly-summary-title {
+    color: var(--primary-color);
+    font-size:20px; /* Zwiększenie rozmiaru */
+    font-weight: bold;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center; /* Wycentrowanie */
+}
+
+.monthly-summary-header {
+    margin-top: 10px;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--text-color);
+    font-size: 15px; /* Zwiększenie rozmiaru */
+    text-align: center; /* Wycentrowanie */
+}
+
+.monthly-summary-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.monthly-summary-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15px; /* Taki sam rozmiar jak nagłówek miesiąca */
+}
+
+.monthly-summary-item:last-child {
+    border-bottom: none;
+}
+
+.monthly-summary-item.highlighted {
+    background-color: var(--light-blue);
+    border-radius: 4px;
+    padding: 8px 5px;
+}
+
+.monthly-summary-name {
+    font-weight: bold;
+    max-width: 70%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.monthly-summary-stats {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap; /* Dodaj zawijanie dla mniejszych ekranów */
+    justify-content: flex-end; /* Wyrównaj do prawej */
+}
+
+.monthly-summary-stat {
+    white-space: nowrap; /* Zapobieganie łamaniu etykiet na wiele linii */
+}
+
+/* Kolorowe oznaczenia dla różnych typów dni */
+.monthly-summary-holiday {
+    color: #228B22; /* zielony */
+}
+
+.monthly-summary-bank-holiday {
+    color: #1a73e8; /* niebieski */
+}
+
+.monthly-summary-sick {
+    color: #ea4335; /* czerwony */
+}
