@@ -254,7 +254,7 @@ function updateYearlySummary() {
             
             // Oblicz pozostałe dni urlopowe
             const holidayDaysPerYear = employee.holidayDaysPerYear || appState.settings.defaultHolidayDays || 26;
-            stats.remainingHolidayDays = holidayDaysPerYear - (stats.holidayDays + stats.bankHolidayDays);
+            stats.remainingHolidayDays = holidayDaysPerYear - stats.holidayDays;
 
             // Jeśli pracownik ma jakieś dni pracy lub specjalne dni w roku, pokaż go
             if (stats.totalHours > 0 || stats.holidayDays > 0 || stats.bankHolidayDays > 0 || stats.sickDays > 0 || stats.offDays > 0) {
