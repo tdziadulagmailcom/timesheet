@@ -172,6 +172,9 @@ function updateLanguage(language) {
         if (typeof updateScheduleUI === 'function') updateScheduleUI();
         if (typeof updateCalendarUI === 'function') updateCalendarUI();
         
+        // Zaktualizuj tłumaczenia zakładki płatności
+        if (typeof updatePaymentsTranslations === 'function') updatePaymentsTranslations();
+
         // Save settings to localStorage
         if (typeof saveAppData === 'function') saveAppData();
         

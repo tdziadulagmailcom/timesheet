@@ -911,3 +911,125 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 table td, table th {
     line-height: 1.2;
 }
+
+/* Style dla zakładki płatności */
+.payments-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.payments-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.year-selector, .date-range-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.year-selector select, 
+.date-range-selector input[type="date"] {
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.payments-summary {
+    margin-bottom: 20px;
+    background-color: var(--light-blue);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.payments-total-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+    gap: 10px;
+}
+
+.payments-list {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.payment-header-row {
+    display: flex;
+    background-color: var(--light-blue);
+    padding: 12px 15px;
+    font-weight: bold;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.payment-row {
+    display: flex;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color);
+    align-items: center;
+}
+
+.payment-row:last-child {
+    border-bottom: none;
+}
+
+.payment-row.paid {
+    background-color: #f5f5f5;
+    color: #999;
+}
+
+.payment-col {
+    padding: 5px;
+}
+
+.employee-col {
+    width: 25%;
+    font-weight: 500;
+}
+
+.week-col {
+    width: 35%;
+}
+
+.amount-col {
+    width: 20%;
+    text-align: right;
+    font-weight: bold;
+}
+
+.amount-col.negative {
+    color: #ea4335;
+}
+
+.status-col {
+    width: 20%;
+    text-align: center;
+}
+
+.payment-status-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.payment-status-checkbox {
+    width: 18px;
+    height: 18px;
+}
+
+.payments-empty-message {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}

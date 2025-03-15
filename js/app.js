@@ -38,7 +38,8 @@ function initApp() {
         // After language update, update these UI elements that depend on language
         updateScheduleUI();
         updateCalendarUI();
-        
+        initPaymentsTab();
+
         console.log('Application initialized successfully');
     } catch (error) {
         console.error('Error during application initialization:', error);

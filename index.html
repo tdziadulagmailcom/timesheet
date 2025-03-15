@@ -28,6 +28,7 @@
             <button class="tab" data-tab="employees" id="tab-employees">Pracownicy</button>
             <button class="tab" data-tab="settings" id="tab-settings">Ustawienia</button>
             <button class="tab" data-tab="calendar" id="tab-calendar">Kalendarz</button>
+            <button class="tab" data-tab="payments" id="tab-payments">Płatności</button>
         </div>
 
         <!-- Harmonogram tab -->
@@ -252,6 +253,36 @@
                 </div>
             </div>
         </div>
+        <div id="payments" class="tab-content">
+            <div class="card">
+                <div class="payments-container">
+                    <div class="payments-header">
+                        <div class="employee-selector">
+                            <label for="payment-employee-select" id="label-payment-employee">Pracownik:</label>
+                            <select id="payment-employee-select">
+                                <option value="all">Wszyscy pracownicy</option>
+                                <!-- Opcje zostaną wypełnione przez JavaScript -->
+                            </select>
+                        </div>
+                        <div class="year-selector">
+                            <label for="payment-year-select" id="label-payment-year">Rok:</label>
+                            <select id="payment-year-select"></select>
+                        </div>
+                        <div class="date-range-selector">
+                            <label for="payment-start-date" id="label-payment-start-date">Od:</label>
+                            <input type="date" id="payment-start-date">
+                            <label for="payment-end-date" id="label-payment-end-date">Do:</label>
+                            <input type="date" id="payment-end-date">
+                        </div>
+                        <button id="calculate-payments" class="btn">Oblicz płatności</button>
+                    </div>
+                    
+                    <div id="payments-list" class="payments-list">
+                        <!-- Lista płatności będzie wypełniana przez JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Load JavaScript modules -->
@@ -264,5 +295,6 @@
     <script src="js/calendar.js"></script>
     <script src="js/settings.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/payments.js"></script>
 </body>
 </html>
