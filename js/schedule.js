@@ -321,10 +321,10 @@ function updateWeekSummary() {
     const rate = employee ? employee.rate : 0;
     const payroll = employee ? (employee.payroll || 0) : 0;
     
-    // Oblicz wartość za dni Holiday i Bank Holiday (zakładamy 8h na dzień)
-    const holidayHoursPerDay = 8; // standardowo 8h za dzień urlopu
-    const holidayValue = holidayDays * holidayHoursPerDay * rate;
-    const bankHolidayValue = bankHolidayDays * holidayHoursPerDay * rate;
+    // Oblicz wartość za dni Holiday i Bank Holiday
+    const baseHoursPerDay = getBaseHoursForEmployee(appState.currentEmployeeId, true);
+    const holidayValue = holidayDays * baseHoursPerDay * rate;
+    const bankHolidayValue = bankHolidayDays * baseHoursPerDay * rate;
     
     // Get custom category values
     const category1Value = parseFloat(document.getElementById('custom-category-value-1').value) || 0;
@@ -646,16 +646,8 @@ function updateTypeForDay(event) {
                         if (minuteSelect) minuteSelect.value = '00';
                     }
                     
-                    // Oblicz godziny bazowe dla pracownika na dzień
-                    const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
-                    const hours = Math.floor(baseHours);
-                    const minutes = Math.round((baseHours - hours) * 60);
-                    
-                    if (minutes === 0) {
-                        hoursCell.textContent = `${hours} hr`;
-                    } else {
-                        hoursCell.textContent = `${hours} hr ${minutes} min`;
-                    }
+                    // Wyświetl "- -" zamiast godzin
+                    hoursCell.textContent = "- -";
                 } else {
                     // Jeśli zmiana z Holiday/Bank Holiday na inny typ
                     if ((!startInput.value || startInput.value === '00:00') && 
@@ -694,6 +686,7 @@ function updateTypeForDay(event) {
         console.error('Error updating type for day:', error);
     }
 }
+
 // Update hours display for a specific day when time inputs change
 function updateHoursForDay(event) {
     console.log('Updating hours for day...');
