@@ -14,15 +14,18 @@ function renderEmployeesList() {
         // Dodaj informację o payroll i średniej godzin
         const payrollText = language === 'pl' ? 'Payroll' : 'Payroll';
         const avgHoursText = language === 'pl' ? 'Średnia godzin/tydzień' : 'Average hours/week';
+        const overrideText = 'Override';
         const payrollValue = employee.payroll ? formatCurrency(employee.payroll) : formatCurrency(0);
         const avgHours = employee.avgHoursPerWeek ? employee.avgHoursPerWeek.toFixed(1) : '0.0';
+        const targetHours = employee.targetHoursPerWeek || 0;
         
         item.innerHTML = `
             <div>
                 <strong>${employee.name}</strong><br>
                 ${language === 'pl' ? 'Stawka' : 'Rate'}: ${formatCurrency(employee.rate)}/${language === 'pl' ? 'h' : 'hr'}<br>
                 ${payrollText}: ${payrollValue}<br>
-                ${avgHoursText}: ${avgHours} h
+                ${avgHoursText}: ${avgHours} 
+                <span style="margin-left: 20px;">${overrideText}: <input type="number" class="target-hours" data-id="${employee.id}" value="${targetHours}" min="0" max="168" step="0.5" style="width: 60px; padding: 2px 5px;"></span>
             </div>
             <div>
                 <button class="btn btn-secondary edit-employee" data-id="${employee.id}">${translations[language]['edit']}</button>
@@ -32,6 +35,25 @@ function renderEmployeesList() {
         
         employeesList.appendChild(item);
     });
+    
+    // Dodaj obsługę zdarzeń dla pól docelowej liczby godzin
+    document.querySelectorAll('.target-hours').forEach(input => {
+        input.addEventListener('change', updateTargetHours);
+    });
+}
+
+
+// Funkcja do aktualizacji docelowej liczby godzin
+function updateTargetHours(event) {
+    const employeeId = Number(event.target.getAttribute('data-id'));
+    const targetHours = parseFloat(event.target.value);
+    
+    // Znajdź pracownika i zaktualizuj wartość
+    const employee = appState.employees.find(emp => emp.id === employeeId);
+    if (employee) {
+        employee.targetHoursPerWeek = targetHours;
+        saveAppData();
+    }
 }
 
 // Obliczanie średniej godzin z ostatnich 13 tygodni
@@ -107,6 +129,16 @@ function addEmployee() {
     
     console.log('New employee ID:', newId);
     
+    // W funkcji addEmployee() dodaj:
+    appState.employees.push({
+        id: newId,
+        name: name,
+        rate: rate,
+        payroll: payroll,
+        avgHoursPerWeek: avgHoursPerWeek,
+        targetHoursPerWeek: 0 // Domyślna wartość
+    });
+
    // Oblicz średnią godzin
    const avgHoursPerWeek = 0; // Dla nowego pracownika ustawiamy 0
     
@@ -174,6 +206,10 @@ function editEmployee(event) {
     // Oblicz średnią godzin
     const avgHoursPerWeek = calculateAvgHoursPerWeek(employeeId);
     
+    // W funkcji editEmployee() dodaj:
+    // Zachowaj istniejącą wartość targetHoursPerWeek lub ustaw 0
+    employee.targetHoursPerWeek = employee.targetHoursPerWeek || 0;
+
     // Aktualizacja danych pracownika
     employee.name = newName.trim();
     employee.rate = parsedRate;
