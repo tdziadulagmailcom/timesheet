@@ -1,8 +1,8 @@
 // Application state management
 const appState = {
     employees: [
-        { id: 1, name: 'Jan Kowalski', rate: 25.00, payroll: 1000.00 },
-        { id: 2, name: 'Anna Nowak', rate: 27.50, payroll: 1200.00 }
+        { id: 1, name: 'Jan Kowalski', rate: 25.00, payroll: 1000.00, avgHoursPerWeek: 0 },
+        { id: 2, name: 'Anna Nowak', rate: 27.50, payroll: 1200.00, avgHoursPerWeek: 0 }
     ],
     settings: {
         regularHoursLimit: 40,
@@ -42,6 +42,15 @@ function loadAppData() {
     try {
         const savedData = localStorage.getItem('harmonogramApp');
         
+        // Po załadowaniu danych, oblicz średnie godzin dla wszystkich pracowników
+        if (parsedData.employees) {
+            appState.employees = parsedData.employees;
+            // Aktualizacja średnich godzin
+            appState.employees.forEach(employee => {
+                employee.avgHoursPerWeek = calculateAvgHoursPerWeek(employee.id);
+            });
+        }
+
         if (savedData) {
             // Try to parse data
             try {

@@ -666,3 +666,8 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .summary-table th:nth-child(3) {
     text-align: center;
 }
+
+#settings input, 
+#settings select {
+    width: 20%;
+}

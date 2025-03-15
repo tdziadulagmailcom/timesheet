@@ -374,6 +374,16 @@ function saveSchedule() {
     // Show confirmation
     const language = appState.settings.language;
     alert(translations[language]['schedule-saved']);
+
+    // Aktualizuj średnią godzin dla bieżącego pracownika
+    const currentEmployee = appState.employees.find(emp => emp.id === Number(appState.currentEmployeeId));
+    if (currentEmployee) {
+        currentEmployee.avgHoursPerWeek = calculateAvgHoursPerWeek(currentEmployee.id);
+        // Odświeżanie listy pracowników, jeśli zakładka jest widoczna
+        if (document.getElementById('employees').classList.contains('active')) {
+            renderEmployeesList();
+        }
+    }
 }
 
 // Export week schedule to Excel

@@ -11,15 +11,18 @@ function renderEmployeesList() {
         const item = document.createElement('div');
         item.className = 'employee-item';
         
-        // Dodaj informację o payroll
+        // Dodaj informację o payroll i średniej godzin
         const payrollText = language === 'pl' ? 'Payroll' : 'Payroll';
+        const avgHoursText = language === 'pl' ? 'Średnia godzin/tydzień' : 'Average hours/week';
         const payrollValue = employee.payroll ? formatCurrency(employee.payroll) : formatCurrency(0);
+        const avgHours = employee.avgHoursPerWeek ? employee.avgHoursPerWeek.toFixed(1) : '0.0';
         
         item.innerHTML = `
             <div>
                 <strong>${employee.name}</strong><br>
                 ${language === 'pl' ? 'Stawka' : 'Rate'}: ${formatCurrency(employee.rate)}/${language === 'pl' ? 'h' : 'hr'}<br>
-                ${payrollText}: ${payrollValue}
+                ${payrollText}: ${payrollValue}<br>
+                ${avgHoursText}: ${avgHours} h
             </div>
             <div>
                 <button class="btn btn-secondary edit-employee" data-id="${employee.id}">${translations[language]['edit']}</button>
@@ -29,6 +32,49 @@ function renderEmployeesList() {
         
         employeesList.appendChild(item);
     });
+}
+
+// Obliczanie średniej godzin z ostatnich 13 tygodni
+function calculateAvgHoursPerWeek(employeeId) {
+    const today = new Date();
+    let totalHours = 0;
+    let weeksCount = 0;
+    
+    // Cofamy się o 13 tygodni (91 dni)
+    for (let i = 0; i < 13; i++) {
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - (7 * i) - today.getDay() + 1);
+        
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        
+        let weekHours = 0;
+        const currentDate = new Date(weekStart);
+        
+        // Liczymy godziny w każdym dniu tygodnia
+        while (currentDate <= weekEnd) {
+            const dateString = formatDate(currentDate);
+            const scheduleKey = `${employeeId}_${dateString}`;
+            const daySchedule = appState.schedule[scheduleKey];
+            
+            if (daySchedule && daySchedule.start && daySchedule.end) {
+                const hoursStr = calculateHours(daySchedule.start, daySchedule.end);
+                if (hoursStr) {
+                    const [hours, minutes] = hoursStr.split(':').map(Number);
+                    weekHours += hours + (minutes / 60);
+                }
+            }
+            
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        if (weekHours > 0) {
+            totalHours += weekHours;
+            weeksCount++;
+        }
+    }
+    
+    return weeksCount > 0 ? totalHours / weeksCount : 0;
 }
 
 // Add new employee
@@ -61,13 +107,17 @@ function addEmployee() {
     
     console.log('New employee ID:', newId);
     
-    // Add employee to the array
-    appState.employees.push({
-        id: newId,
-        name: name,
-        rate: rate,
-        payroll: payroll
-    });
+   // Oblicz średnią godzin
+   const avgHoursPerWeek = 0; // Dla nowego pracownika ustawiamy 0
+    
+   // Add employee to the array
+   appState.employees.push({
+       id: newId,
+       name: name,
+       rate: rate,
+       payroll: payroll,
+       avgHoursPerWeek: avgHoursPerWeek
+   });
     
     console.log('Employee added:', { id: newId, name: name, rate: rate });
     
@@ -121,10 +171,14 @@ function editEmployee(event) {
         return;
     }
     
+    // Oblicz średnią godzin
+    const avgHoursPerWeek = calculateAvgHoursPerWeek(employeeId);
+    
     // Aktualizacja danych pracownika
     employee.name = newName.trim();
     employee.rate = parsedRate;
     employee.payroll = parsedPayroll;
+    employee.avgHoursPerWeek = avgHoursPerWeek;
     
     // Save to localStorage
     saveAppData();
