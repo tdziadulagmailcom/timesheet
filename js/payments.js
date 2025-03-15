@@ -3,9 +3,11 @@
 // Stan płatności
 let paymentsState = {
     payments: [], // Lista płatności
-    paidStatuses: {} // Status opłacenia dla każdej płatności
+    paidStatuses: {}, // Status opłacenia dla każdej płatności
+    unpaidTotal: 0 // Suma niezapłaconych kwot
 };
 
+// Inicjalizacja zakładki płatności
 // Inicjalizacja zakładki płatności
 function initPaymentsTab() {
     // Wypełnij selektor roku
@@ -17,8 +19,51 @@ function initPaymentsTab() {
     // Ustaw domyślne daty
     setDefaultDateRange();
     
+    // Dodaj panel podsumowania, jeśli nie istnieje
+    createPaymentsSummaryPanel();
+    
     // Dodaj nasłuchiwanie zdarzeń
     document.getElementById('calculate-payments').addEventListener('click', calculatePayments);
+}
+
+// Tworzenie panelu podsumowania płatności
+function createPaymentsSummaryPanel() {
+    // Sprawdź czy panel już istnieje
+    if (document.querySelector('.payments-summary')) {
+        return;
+    }
+    
+    const paymentsContainer = document.querySelector('.payments-container');
+    if (!paymentsContainer) return;
+    
+    // Utwórz panel podsumowania
+    const summaryPanel = document.createElement('div');
+    summaryPanel.className = 'payments-summary';
+    
+    // Utwórz kontener dla sumy
+    const totalContainer = document.createElement('div');
+    totalContainer.className = 'payments-total-container';
+    
+    const language = appState.settings.language || 'pl';
+    const totalLabel = document.createElement('div');
+    totalLabel.textContent = language === 'pl' ? 'Suma niezapłaconych:' : 'Total unpaid:';
+    
+    const totalValue = document.createElement('div');
+    totalValue.id = 'payments-total-value';
+    totalValue.textContent = formatCurrency(0);
+    
+    // Złóż panel
+    totalContainer.appendChild(totalLabel);
+    totalContainer.appendChild(totalValue);
+    summaryPanel.appendChild(totalContainer);
+    
+    // Dodaj panel po nagłówku, a przed listą płatności
+    const paymentsList = document.getElementById('payments-list');
+    if (paymentsList) {
+        paymentsContainer.insertBefore(summaryPanel, paymentsList);
+    } else {
+        paymentsContainer.appendChild(summaryPanel);
+    }
 }
 
 // Wypełnij selektor roku
@@ -68,6 +113,7 @@ function setDefaultDateRange() {
 }
 
 // Oblicz płatności dla wybranego okresu
+// Oblicz płatności dla wybranego okresu
 function calculatePayments() {
     try {
         const startDate = new Date(document.getElementById('payment-start-date').value);
@@ -85,6 +131,9 @@ function calculatePayments() {
             alert(language === 'pl' ? 'Data końcowa nie może być wcześniejsza niż data początkowa.' : 'End date cannot be earlier than start date.');
             return;
         }
+        
+        // Upewnij się, że panel podsumowania istnieje
+        createPaymentsSummaryPanel();
         
         // Zbierz wszystkie płatności w podanym zakresie dat
         const payments = collectPaymentsForDateRange(startDate, endDate);
@@ -362,8 +411,15 @@ function updateUnpaidTotal() {
         }
     });
     
-    document.getElementById('payments-total-value').textContent = formatCurrency(unpaidTotal);
-    document.getElementById('payments-total-value').className = unpaidTotal < 0 ? 'negative' : '';
+    // Zapisz do stanu
+    paymentsState.unpaidTotal = unpaidTotal;
+    
+    // Aktualizuj wyświetlanie
+    const totalElement = document.getElementById('payments-total-value');
+    if (totalElement) {
+        totalElement.textContent = formatCurrency(unpaidTotal);
+        totalElement.className = unpaidTotal < 0 ? 'negative' : '';
+    }
 }
 
 // Aktualizacja tłumaczeń dla zakładki płatności

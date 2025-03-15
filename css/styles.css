@@ -973,7 +973,7 @@ table td, table th {
 
 .payment-row {
     display: flex;
-    padding: 10px 15px;
+    padding: 5px 10px;
     border-bottom: 1px solid var(--border-color);
     align-items: center;
 }
@@ -988,7 +988,7 @@ table td, table th {
 }
 
 .payment-col {
-    padding: 5px;
+    padding: 1px;
 }
 
 .employee-col {
@@ -1018,7 +1018,7 @@ table td, table th {
 .payment-status-label {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     cursor: pointer;
 }
 
@@ -1028,7 +1028,7 @@ table td, table th {
 }
 
 .payments-empty-message {
-    padding: 20px;
+    padding: 10px;
     text-align: center;
     color: #666;
     font-style: italic;

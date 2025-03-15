@@ -123,6 +123,11 @@ function updateLanguage(language) {
         
         if (headerLangSelect) headerLangSelect.value = language;
         if (settingsLangSelect) settingsLangSelect.value = language;
+        // Update payments summary label if it exists
+        const paymentsTotalLabel = document.querySelector('.payments-total-container div:first-child');
+        if (paymentsTotalLabel) {
+            paymentsTotalLabel.textContent = language === 'pl' ? 'Suma niezapłaconych:' : 'Total unpaid:';
+        }
         
         // Update text for all elements with translation
         if (translations[language]) {
