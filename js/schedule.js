@@ -87,6 +87,31 @@ function updateScheduleUI() {
         // Add event listeners to time inputs
         initScheduleInputs();
         
+        // Sprawdź, czy harmonogram jest zablokowany
+        const locked = isScheduleLocked();
+    
+        if (locked) {
+            // Wyłącz wszystkie pola formularza
+            document.querySelectorAll('.start-time, .end-time, .type-select, .custom-category-text, .custom-category-value').forEach(input => {
+                input.disabled = true;
+            });
+    
+            // Wyłącz niestandardowe selektory czasu
+            document.querySelectorAll('.custom-time-select').forEach(select => {
+                select.classList.add('disabled');
+                select.querySelectorAll('select').forEach(s => s.disabled = true);
+         });
+    
+            // Pokaż wskaźnik blokady
+            const lockIndicator = document.getElementById('schedule-lock-indicator');
+            if (lockIndicator) {
+                lockIndicator.classList.remove('hidden');
+                lockIndicator.textContent = appState.settings.language === 'pl' ? 
+                    '🔒 Zablokowany' : 
+                    '🔒 Locked';
+            }
+        }       
+
         // Update summary
         updateWeekSummary();
         
@@ -96,6 +121,14 @@ function updateScheduleUI() {
     }
 }
 
+// Funkcja do sprawdzania, czy harmonogram jest zablokowany
+function isScheduleLocked() {
+    const weekStart = formatDate(appState.currentWeekStart);
+    const weekKey = `${appState.currentEmployeeId}_week_${weekStart}`;
+    const weekData = appState.schedule[weekKey];
+    
+    return weekData && weekData.locked === true;
+}
 // Initialize schedule time inputs event listeners
 function initScheduleInputs() {
     console.log('Initializing time fields...');
@@ -234,6 +267,7 @@ function getBaseHoursForEmployee(employeeId, isDaily = false) {
 function updateHoursForDay(event) {
     console.log('Updating hours for day...');
     
+    
     try {
         const dayIndex = event.target.getAttribute('data-day');
         const startInput = document.querySelector(`.start-time[data-day="${dayIndex}"]`);
@@ -247,6 +281,18 @@ function updateHoursForDay(event) {
         }
         
         const selectedType = typeSelect.value;
+
+        // Sprawdź, czy harmonogram jest zablokowany
+        if (isScheduleLocked()) {
+            console.log('Schedule is locked, cannot update hours');
+            return;
+        }
+        
+
+        if (isScheduleLocked()) {
+            console.log('Schedule is locked, cannot update type');
+            return;
+        }
         
         // Jeśli typ to Holiday lub Bank Holiday, użyj wartości dziennych (nie tygodniowych)
         if (selectedType === 'Holiday' || selectedType === 'Bank Holiday') {
@@ -494,6 +540,17 @@ function unlockSchedule() {
             appState.schedule[scheduleKey].locked = false;
         }
     }
+
+    // Po odblokowaniu, włącz pola formularza
+    document.querySelectorAll('.start-time, .end-time, .type-select, .custom-category-text, .custom-category-value').forEach(input => {
+        input.disabled = false;
+    });
+    
+    // Włącz niestandardowe selektory czasu
+    document.querySelectorAll('.custom-time-select').forEach(select => {
+        select.classList.remove('disabled');
+        select.querySelectorAll('select').forEach(s => s.disabled = false);
+    });
     
     // Zapisz zmiany
     saveAppData();
@@ -602,9 +659,31 @@ function saveSchedule() {
     // Update calendar
     updateCalendarUI();
     
+    // Po zapisaniu natychmiast zaktualizuj UI, aby pokazać, że harmonogram jest zablokowany
+    const lockIndicator = document.getElementById('schedule-lock-indicator');
+    if (lockIndicator) {
+        lockIndicator.classList.remove('hidden');
+        lockIndicator.textContent = appState.settings.language === 'pl' ? 
+            '🔒 Zablokowany' : 
+            '🔒 Locked';
+    }
+
+    // Wyłącz pola formularza
+    document.querySelectorAll('.start-time, .end-time, .type-select, .custom-category-text, .custom-category-value').forEach(input => {
+        input.disabled = true;
+    });
+
+    // Wyłącz niestandardowe selektory czasu
+    document.querySelectorAll('.custom-time-select').forEach(select => {
+        select.classList.add('disabled');
+        select.querySelectorAll('select').forEach(s => s.disabled = true);
+    });
+
     // Show confirmation
     const language = appState.settings.language;
     alert(translations[language]['schedule-saved']);
+
+    
 }
 
 // Export week schedule to Excel

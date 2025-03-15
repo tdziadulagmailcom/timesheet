@@ -98,6 +98,19 @@ function addEventListeners() {
     } catch (error) {
         console.error('Error adding event listeners:', error);
     }
+    // Przesuń wskaźnik blokady po prawej stronie przycisku "Eksportuj do Excel"
+    const exportButton = document.getElementById('export-week');
+    const lockIndicator = document.getElementById('schedule-lock-indicator');
+    
+    if (exportButton && lockIndicator && exportButton.parentNode) {
+        // Usuń wskaźnik z jego obecnej lokalizacji
+        if (lockIndicator.parentNode) {
+            lockIndicator.parentNode.removeChild(lockIndicator);
+        }
+        
+        // Dodaj wskaźnik zaraz po przycisku eksportu
+        exportButton.insertAdjacentElement('afterend', lockIndicator);
+    }
 }
 
 // Update UI language

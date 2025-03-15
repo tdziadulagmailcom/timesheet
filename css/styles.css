@@ -1038,11 +1038,13 @@ table td, table th {
 .locked-schedule-indicator {
     background-color: #f8d7da;
     color: #721c24;
-    padding: 10px;
-    margin-top: 10px;
+    padding: 5px 10px;
+    margin-left: 10px;
     border-radius: 4px;
     font-weight: bold;
-    text-align: center;
+    display: inline-block;
+    font-size: 14px;
+    vertical-align: middle;
 }
 
 /* Style dla zablokowanych wierszy harmonogramu */
@@ -1059,4 +1061,23 @@ table td, table th {
     display: inline-block;
     margin-left: 5px;
     font-size: 12px;
+}
+
+/* Style dla zablokowanych pól */
+.week-table input[disabled],
+.week-table select[disabled] {
+    background-color: #f8f9fa;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.custom-time-select.disabled {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.custom-category input[disabled] {
+    background-color: #f8f9fa;
+    opacity: 0.7;
+    cursor: not-allowed;
 }
