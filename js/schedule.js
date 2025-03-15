@@ -179,21 +179,30 @@ function initScheduleInputs() {
     }
 }
 
-// Funkcja pomocnicza do pobierania godzin bazowych dla pracownika
-function getBaseHoursForEmployee(employeeId) {
+// Modyfikacja funkcji pomocniczej do pobierania godzin bazowych dla pracownika (dziennych)
+function getBaseHoursForEmployee(employeeId, isDaily = false) {
     const employee = appState.employees.find(emp => emp.id === Number(employeeId));
     if (!employee) return 0;
     
-    // Jeśli jest wartość w override (targetHoursPerWeek) inna niż 0, użyj jej
-    if (employee.targetHoursPerWeek && employee.targetHoursPerWeek > 0) {
-        return employee.targetHoursPerWeek;
+    if (isDaily) {
+        // Jeśli jest wartość w override dla dziennych godzin inna niż 0, użyj jej
+        if (employee.targetHoursPerDay && employee.targetHoursPerDay > 0) {
+            return employee.targetHoursPerDay;
+        }
+        
+        // W przeciwnym przypadku wylicz z średniej tygodniowej (zakładamy 5 dni roboczych)
+        return employee.avgHoursPerWeek ? employee.avgHoursPerWeek / 5 : 0;
+    } else {
+        // Dla tygodniowych - istniejąca logika
+        if (employee.targetHoursPerWeek && employee.targetHoursPerWeek > 0) {
+            return employee.targetHoursPerWeek;
+        }
+        
+        return employee.avgHoursPerWeek || 0;
     }
-    
-    // W przeciwnym przypadku użyj średniej godzin
-    return employee.avgHoursPerWeek || 0;
 }
 
-// Update hours display for a specific day when time inputs change
+// Modyfikacja funkcji updateHoursForDay
 function updateHoursForDay(event) {
     console.log('Updating hours for day...');
     
@@ -211,9 +220,9 @@ function updateHoursForDay(event) {
         
         const selectedType = typeSelect.value;
         
-        // Jeśli typ to Holiday lub Bank Holiday, użyj wartości bazowych
+        // Jeśli typ to Holiday lub Bank Holiday, użyj wartości dziennych (nie tygodniowych)
         if (selectedType === 'Holiday' || selectedType === 'Bank Holiday') {
-            const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId);
+            const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
             // Konwertuj decimalne godziny na format "X hr" lub "X hr Y min"
             const hours = Math.floor(baseHours);
             const minutes = Math.round((baseHours - hours) * 60);
@@ -239,15 +248,23 @@ function updateHoursForDay(event) {
     }
 }
 
-// Calculate total hours for the week
+// Modyfikacja funkcji calculateTotalHours
 function calculateTotalHours() {
     let totalMinutes = 0;
     
     for (let i = 0; i < 7; i++) {
         const startInput = document.querySelector(`.start-time[data-day="${i}"]`);
         const endInput = document.querySelector(`.end-time[data-day="${i}"]`);
+        const typeSelect = document.querySelector(`.type-select[data-day="${i}"]`);
         
-        if (startInput && endInput && startInput.value && endInput.value) {
+        const selectedType = typeSelect ? typeSelect.value : '';
+        
+        if (selectedType === 'Holiday' || selectedType === 'Bank Holiday') {
+            // Dla typów Holiday/Bank Holiday używamy średniej dziennej
+            const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
+            totalMinutes += baseHours * 60; // Konwersja na minuty
+        } else if (startInput && endInput && startInput.value && endInput.value) {
+            // Standardowe wyliczanie
             const hours = calculateHours(startInput.value, endInput.value);
             if (hours) {
                 const [h, m] = hours.split(':').map(Number);
@@ -549,7 +566,7 @@ function navigateToNextWeek() {
     updateScheduleUI();
 }
 
-// Update type for a specific day when dropdown changes
+// Modyfikacja funkcji updateTypeForDay
 function updateTypeForDay(event) {
     console.log('Updating type for day...');
     
@@ -575,7 +592,7 @@ function updateTypeForDay(event) {
             
             if (hoursCell) {
                 if (selectedType === 'Holiday' || selectedType === 'Bank Holiday') {
-                    const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId);
+                    const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
                     const hours = Math.floor(baseHours);
                     const minutes = Math.round((baseHours - hours) * 60);
                     

@@ -1,6 +1,6 @@
 // Employees-related functions
 
-// Render employees list
+// Render employees list - modyfikacja
 function renderEmployeesList() {
     const employeesList = document.getElementById('employees-list');
     employeesList.innerHTML = '';
@@ -14,10 +14,13 @@ function renderEmployeesList() {
         // Dodaj informację o payroll i średniej godzin
         const payrollText = language === 'pl' ? 'Payroll' : 'Payroll';
         const avgHoursText = language === 'pl' ? 'Średnia godzin/tydzień' : 'Average hours/week';
+        const avgDailyText = language === 'pl' ? 'Średnia godzin/dzień' : 'Average hours/day';
         const overrideText = 'Override';
         const payrollValue = employee.payroll ? formatCurrency(employee.payroll) : formatCurrency(0);
         const avgHours = employee.avgHoursPerWeek ? employee.avgHoursPerWeek.toFixed(1) : '0.0';
+        const avgDailyHours = employee.avgHoursPerWeek ? (employee.avgHoursPerWeek / 5).toFixed(1) : '0.0';
         const targetHours = employee.targetHoursPerWeek || 0;
+        const targetDailyHours = employee.targetHoursPerDay || 0;
         
         item.innerHTML = `
             <div>
@@ -25,7 +28,9 @@ function renderEmployeesList() {
                 ${language === 'pl' ? 'Stawka' : 'Rate'}: ${formatCurrency(employee.rate)}/${language === 'pl' ? 'h' : 'hr'}<br>
                 ${payrollText}: ${payrollValue}<br>
                 ${avgHoursText}: ${avgHours} 
-                <span style="margin-left: 20px;">${overrideText}: <input type="number" class="target-hours" data-id="${employee.id}" value="${targetHours}" min="0" max="168" step="0.5" style="width: 60px; padding: 2px 5px;"></span>
+                <span style="margin-left: 20px;">${overrideText}: <input type="number" class="target-hours" data-id="${employee.id}" value="${targetHours}" min="0" max="168" step="0.5" style="width: 60px; padding: 2px 5px;"></span><br>
+                ${avgDailyText}: ${avgDailyHours} 
+                <span style="margin-left: 20px;">${overrideText}: <input type="number" class="target-daily-hours" data-id="${employee.id}" value="${targetDailyHours}" min="0" max="24" step="0.5" style="width: 60px; padding: 2px 5px;"></span>
             </div>
             <div>
                 <button class="btn btn-secondary edit-employee" data-id="${employee.id}">${translations[language]['edit']}</button>
@@ -40,8 +45,25 @@ function renderEmployeesList() {
     document.querySelectorAll('.target-hours').forEach(input => {
         input.addEventListener('change', updateTargetHours);
     });
+    
+    // Dodaj obsługę zdarzeń dla pól docelowej dziennej liczby godzin
+    document.querySelectorAll('.target-daily-hours').forEach(input => {
+        input.addEventListener('change', updateTargetDailyHours);
+    });
 }
 
+// Funkcja do aktualizacji docelowej dziennej liczby godzin
+function updateTargetDailyHours(event) {
+    const employeeId = Number(event.target.getAttribute('data-id'));
+    const targetDailyHours = parseFloat(event.target.value);
+    
+    // Znajdź pracownika i zaktualizuj wartość
+    const employee = appState.employees.find(emp => emp.id === employeeId);
+    if (employee) {
+        employee.targetHoursPerDay = targetDailyHours;
+        saveAppData();
+    }
+}
 
 // Funkcja do aktualizacji docelowej liczby godzin
 function updateTargetHours(event) {
@@ -136,7 +158,8 @@ function addEmployee() {
         rate: rate,
         payroll: payroll,
         avgHoursPerWeek: avgHoursPerWeek,
-        targetHoursPerWeek: 0 // Domyślna wartość
+        targetHoursPerWeek: 0, // Domyślna wartość
+        targetHoursPerDay: 0 // Domyślna wartość dla średniej dziennej
     });
 
    // Oblicz średnią godzin
@@ -209,6 +232,7 @@ function editEmployee(event) {
     // W funkcji editEmployee() dodaj:
     // Zachowaj istniejącą wartość targetHoursPerWeek lub ustaw 0
     employee.targetHoursPerWeek = employee.targetHoursPerWeek || 0;
+    employee.targetHoursPerDay = employee.targetHoursPerDay || 0;
 
     // Aktualizacja danych pracownika
     employee.name = newName.trim();

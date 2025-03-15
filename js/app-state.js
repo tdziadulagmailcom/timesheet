@@ -56,6 +56,8 @@ function loadAppData() {
                 // Aktualizacja średnich godzin dla wszystkich pracowników
                 appState.employees.forEach(employee => {
                     employee.avgHoursPerWeek = calculateAvgHoursPerWeek(employee.id);
+                    employee.targetHoursPerWeek = employee.targetHoursPerWeek || 0;
+                    employee.targetHoursPerDay = employee.targetHoursPerDay || 0;
                 });
                 
                 console.log('Data loaded successfully from localStorage');
