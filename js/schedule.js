@@ -179,6 +179,20 @@ function initScheduleInputs() {
     }
 }
 
+// Funkcja pomocnicza do pobierania godzin bazowych dla pracownika
+function getBaseHoursForEmployee(employeeId) {
+    const employee = appState.employees.find(emp => emp.id === Number(employeeId));
+    if (!employee) return 0;
+    
+    // Jeśli jest wartość w override (targetHoursPerWeek) inna niż 0, użyj jej
+    if (employee.targetHoursPerWeek && employee.targetHoursPerWeek > 0) {
+        return employee.targetHoursPerWeek;
+    }
+    
+    // W przeciwnym przypadku użyj średniej godzin
+    return employee.avgHoursPerWeek || 0;
+}
+
 // Update hours display for a specific day when time inputs change
 function updateHoursForDay(event) {
     console.log('Updating hours for day...');
@@ -188,15 +202,33 @@ function updateHoursForDay(event) {
         const startInput = document.querySelector(`.start-time[data-day="${dayIndex}"]`);
         const endInput = document.querySelector(`.end-time[data-day="${dayIndex}"]`);
         const hoursCell = document.querySelector(`.hours-cell[data-day="${dayIndex}"]`);
+        const typeSelect = document.querySelector(`.type-select[data-day="${dayIndex}"]`);
         
-        if (!startInput || !endInput || !hoursCell) {
+        if (!startInput || !endInput || !hoursCell || !typeSelect) {
             console.error('Could not find elements for updating hours');
             return;
         }
         
-        // Calculate hours regardless of selected type
-        const hours = calculateHours(startInput.value, endInput.value);
-        hoursCell.textContent = formatHoursForDisplay(hours);
+        const selectedType = typeSelect.value;
+        
+        // Jeśli typ to Holiday lub Bank Holiday, użyj wartości bazowych
+        if (selectedType === 'Holiday' || selectedType === 'Bank Holiday') {
+            const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId);
+            // Konwertuj decimalne godziny na format "X hr" lub "X hr Y min"
+            const hours = Math.floor(baseHours);
+            const minutes = Math.round((baseHours - hours) * 60);
+            
+            // Formatuj wyświetlanie
+            if (minutes === 0) {
+                hoursCell.textContent = `${hours} hr`;
+            } else {
+                hoursCell.textContent = `${hours} hr ${minutes} min`;
+            }
+        } else {
+            // Standardowe obliczanie godzin, gdy typ nie jest Holiday ani Bank Holiday
+            const hours = calculateHours(startInput.value, endInput.value);
+            hoursCell.textContent = formatHoursForDisplay(hours);
+        }
         
         // Update summary
         updateWeekSummary();
@@ -523,6 +555,7 @@ function updateTypeForDay(event) {
     
     try {
         const selectedType = event.target.value;
+        const dayIndex = event.target.getAttribute('data-day');
         
         // Find row and modify based on selected type
         const row = event.target.closest('tr');
@@ -533,6 +566,34 @@ function updateTypeForDay(event) {
             // Apply specific styling based on type
             if (selectedType === 'Bank Holiday') {
                 row.classList.add('bank-holiday');
+            }
+            
+            // Aktualizuj wyświetlane godziny po zmianie typu
+            const hoursCell = row.querySelector(`.hours-cell`);
+            const startInput = row.querySelector(`.start-time`);
+            const endInput = row.querySelector(`.end-time`);
+            
+            if (hoursCell) {
+                if (selectedType === 'Holiday' || selectedType === 'Bank Holiday') {
+                    const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId);
+                    const hours = Math.floor(baseHours);
+                    const minutes = Math.round((baseHours - hours) * 60);
+                    
+                    if (minutes === 0) {
+                        hoursCell.textContent = `${hours} hr`;
+                    } else {
+                        hoursCell.textContent = `${hours} hr ${minutes} min`;
+                    }
+                } else if (startInput && endInput && startInput.value && endInput.value) {
+                    // Standardowe obliczanie godzin
+                    const hours = calculateHours(startInput.value, endInput.value);
+                    hoursCell.textContent = formatHoursForDisplay(hours);
+                } else {
+                    hoursCell.textContent = '';
+                }
+                
+                // Aktualizuj podsumowanie
+                updateWeekSummary();
             }
         }
     } catch (error) {
