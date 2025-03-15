@@ -42,15 +42,6 @@ function loadAppData() {
     try {
         const savedData = localStorage.getItem('harmonogramApp');
         
-        // Po załadowaniu danych, oblicz średnie godzin dla wszystkich pracowników
-        if (parsedData.employees) {
-            appState.employees = parsedData.employees;
-            // Aktualizacja średnich godzin
-            appState.employees.forEach(employee => {
-                employee.avgHoursPerWeek = calculateAvgHoursPerWeek(employee.id);
-            });
-        }
-
         if (savedData) {
             // Try to parse data
             try {
@@ -61,6 +52,11 @@ function loadAppData() {
                 if (parsedData.settings) appState.settings = parsedData.settings;
                 if (parsedData.bankHolidays) appState.bankHolidays = parsedData.bankHolidays;
                 if (parsedData.schedule) appState.schedule = parsedData.schedule;
+                
+                // Aktualizacja średnich godzin dla wszystkich pracowników
+                appState.employees.forEach(employee => {
+                    employee.avgHoursPerWeek = calculateAvgHoursPerWeek(employee.id);
+                });
                 
                 console.log('Data loaded successfully from localStorage');
             } catch (parseError) {
