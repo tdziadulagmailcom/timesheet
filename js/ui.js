@@ -190,6 +190,15 @@ function populateEmployeeSelectors() {
         const select = document.getElementById(selectorId);
         select.innerHTML = '';
         
+        // Dodaj pustą opcję tylko dla selektora kalendarza
+        if (selectorId === 'calendar-employee-select') {
+            const language = appState.settings.language || 'pl';
+            const emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = language === 'pl' ? '-- Brak podświetlenia --' : '-- No highlight --';
+            select.appendChild(emptyOption);
+        }
+        
         appState.employees.forEach(employee => {
             const option = document.createElement('option');
             option.value = employee.id;
@@ -197,7 +206,7 @@ function populateEmployeeSelectors() {
             select.appendChild(option);
         });
         
-        // Set current employee
-        select.value = appState.currentEmployeeId;
+        // Ustaw domyślną wartość
+        select.value = selectorId === 'calendar-employee-select' ? '' : appState.currentEmployeeId;
     });
 }

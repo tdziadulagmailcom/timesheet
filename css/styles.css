@@ -671,3 +671,19 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 #settings select {
     width: 20%;
 }
+
+/* Style dla typów harmonogramu */
+.holiday-type, .bank-holiday-type {
+    color: #228B22; /* zielony */
+    font-weight: bold;
+}
+
+.home-type {
+    color: #1a73e8; /* niebieski */
+    font-weight: bold;
+}
+
+.sick-type {
+    color: #ea4335; /* czerwony */
+    font-weight: bold;
+}

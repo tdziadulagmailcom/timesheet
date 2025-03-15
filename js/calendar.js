@@ -85,20 +85,41 @@ function updateCalendarUI() {
                         const scheduleKey = `${employee.id}_${dateString}`;
                         const daySchedule = appState.schedule[scheduleKey];
                         
-                        if (daySchedule && daySchedule.start && daySchedule.end) {
+                        if (daySchedule) {
                             hasSchedules = true;
                             
-                            // Format hours
-                            const hours = calculateHours(daySchedule.start, daySchedule.end);
-                            const formattedHours = formatHoursForCalendar(hours);
+                            // Sprawdź typ dnia
+                            const scheduleType = daySchedule.type || '';
+                            let displayText = '';
+                            let typeClass = '';
                             
-                            // Add employee schedule to cell
-                            cellContent += `
-                                <div class="employee-schedule">
-                                    <span class="employee-name" data-employee-id="${employee.id}">${employee.name}</span>
-                                    <span class="employee-hours">${formattedHours}</span>
-                                </div>
-                            `;
+                            if (scheduleType === 'Holiday') {
+                                displayText = 'H';
+                                typeClass = 'holiday-type';
+                            } else if (scheduleType === 'Bank Holiday') {
+                                displayText = 'BH';
+                                typeClass = 'bank-holiday-type';
+                            } else if (scheduleType === 'Home') {
+                                displayText = 'Ho';
+                                typeClass = 'home-type';
+                            } else if (scheduleType === 'Sick') {
+                                displayText = 'S';
+                                typeClass = 'sick-type';
+                            } else if (daySchedule.start && daySchedule.end) {
+                                // Standardowe godziny, jeśli nie ma specjalnego typu
+                                const hours = calculateHours(daySchedule.start, daySchedule.end);
+                                displayText = formatHoursForCalendar(hours);
+                            }
+                            
+                            if (displayText) {
+                                // Add employee schedule to cell
+                                cellContent += `
+                                    <div class="employee-schedule">
+                                        <span class="employee-name" data-employee-id="${employee.id}">${employee.name}</span>
+                                        <span class="employee-hours ${typeClass}">${displayText}</span>
+                                    </div>
+                                `;
+                            }
                         }
                     });
                     
@@ -317,26 +338,28 @@ function calculateEmployeeWeekHours(employeeId, weekStart, weekEnd) {
 // Funkcja do podświetlania wybranego pracownika w kalendarzu
 function highlightSelectedEmployee() {
     try {
-        const selectedEmployeeId = Number(document.getElementById('calendar-employee-select').value);
+        const selectedEmployeeId = document.getElementById('calendar-employee-select').value;
         
         // Znajdź wszystkie elementy nazw pracowników w kalendarzu
         document.querySelectorAll('.employee-name').forEach(nameElement => {
             // Usuń istniejące klasy podświetlenia
             nameElement.classList.remove('highlighted-employee');
             
-            // Pobierz ID pracownika z atrybutu data
-            const employeeId = Number(nameElement.getAttribute('data-employee-id'));
-            
-            // Dodaj podświetlenie, jeśli to wybrany pracownik
-            if (employeeId === selectedEmployeeId) {
-                nameElement.classList.add('highlighted-employee');
+            // Jeśli wybrano pracownika, podświetl go
+            if (selectedEmployeeId) {
+                // Pobierz ID pracownika z atrybutu data
+                const employeeId = nameElement.getAttribute('data-employee-id');
+                
+                // Dodaj podświetlenie, jeśli to wybrany pracownik
+                if (employeeId === selectedEmployeeId) {
+                    nameElement.classList.add('highlighted-employee');
+                }
             }
         });
     } catch (error) {
         console.error('Błąd podczas podświetlania pracownika:', error);
     }
 }
-
 // Modyfikacja funkcji handleCalendarEmployeeChange
 function handleCalendarEmployeeChange(event) {
     console.log('Zmieniony pracownik w kalendarzu');
