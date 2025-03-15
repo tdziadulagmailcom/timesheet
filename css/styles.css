@@ -870,3 +870,18 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .yearly-summary-off {
     color: #666666; /* ciemnoszary */
 }
+
+/* Style dla ramki z pozostałymi dniami urlopowymi */
+.yearly-summary-holiday-box {
+    border: 2px solid var(--primary-color);
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-top: 5px;
+    background-color: #f0f8ff;
+    display: inline-block;
+}
+
+.yearly-summary-remaining-holiday {
+    font-weight: bold;
+    color: var(--primary-color);
+}

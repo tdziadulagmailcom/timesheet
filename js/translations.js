@@ -86,12 +86,16 @@ const translations = {
         'confirm-reset-week': 'Czy na pewno chcesz wyzerować harmonogram na ten tydzień?',
         'week-reset': 'Harmonogram został wyzerowany.',
         'custom-category-1-placeholder': 'Dodatkowa kategoria 1',
-        'custom-category-2-placeholder': 'Dodatkowa kategoria 2'
+        'custom-category-2-placeholder': 'Dodatkowa kategoria 2',
+        'label-default-holiday-days': 'Domyślna liczba dni urlopowych (rocznie):',
+        'invalid-holiday-days': 'Proszę podać prawidłową liczbę dni urlopowych.'
     },
     en: {
         'app-title': 'Work Schedule',
         'custom-category-1-placeholder': 'Additional category 1',
         'custom-category-2-placeholder': 'Additional category 2',
+        'label-default-holiday-days': 'Default holiday days (yearly):',
+        'invalid-holiday-days': 'Please enter a valid number of holiday days.',
         'reset-week': 'Reset Week',
         'label-reset-password': 'Reset password:',
         'reset-password-placeholder': 'Enter password',

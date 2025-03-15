@@ -88,7 +88,15 @@ function loadAppData() {
         if (currencySelect) currencySelect.value = appState.settings.currency;
         if (languageSelect) languageSelect.value = appState.settings.language;
         if (headerLanguageSelect) headerLanguageSelect.value = appState.settings.language;
-    } catch (error) {
+        // Upewnij się że wartość domyślnych dni urlopowych jest ustawiona
+        if (!appState.settings.defaultHolidayDays) {
+            appState.settings.defaultHolidayDays = 26; // domyślnie 26 dni
+        }
+
+        // Upewnij się, że pole jest wypełnione w UI
+        const defaultHolidayDaysInput = document.getElementById('default-holiday-days');
+        if (defaultHolidayDaysInput) defaultHolidayDaysInput.value = appState.settings.defaultHolidayDays;
+        } catch (error) {
         console.error('Error loading application data:', error);
     }
 }
@@ -113,6 +121,11 @@ function checkAppState() {
             { id: 2, name: 'Anna Nowak', rate: 27.50, payroll: 1200.00 }
         ];
     }
+
+    // Upewnij się, że każdy pracownik ma ustawioną wartość dni urlopowych
+    appState.employees.forEach(employee => {
+    employee.holidayDaysPerYear = employee.holidayDaysPerYear || 26;
+    });
 
     // Check if current employee is set
     if (!appState.currentEmployeeId || !appState.employees.some(e => e.id === appState.currentEmployeeId)) {

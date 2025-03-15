@@ -252,6 +252,10 @@ function updateYearlySummary() {
             // Oblicz statystyki roczne dla pracownika
             const stats = calculateEmployeeYearStats(employee.id, year);
             
+            // Oblicz pozostałe dni urlopowe
+            const holidayDaysPerYear = employee.holidayDaysPerYear || appState.settings.defaultHolidayDays || 26;
+            stats.remainingHolidayDays = holidayDaysPerYear - (stats.holidayDays + stats.bankHolidayDays);
+
             // Jeśli pracownik ma jakieś dni pracy lub specjalne dni w roku, pokaż go
             if (stats.totalHours > 0 || stats.holidayDays > 0 || stats.bankHolidayDays > 0 || stats.sickDays > 0 || stats.offDays > 0) {
                 // Utwórz wiersz pracownika
@@ -302,6 +306,18 @@ function updateYearlySummary() {
                 statsDiv.appendChild(sickSpan);
                 statsDiv.appendChild(offSpan);
                 
+                // Dodaj specjalną ramkę dla pozostałych dni urlopowych
+                const holidayBoxDiv = document.createElement('div');
+                holidayBoxDiv.className = 'yearly-summary-holiday-box';
+
+                const remainingHolidaySpan = document.createElement('span');
+                remainingHolidaySpan.className = 'yearly-summary-remaining-holiday';
+                const holidayLabel = language === 'pl' ? 'Pozostało dni urlopowych: ' : 'Remaining holiday days: ';
+                remainingHolidaySpan.textContent = `${holidayLabel}${stats.remainingHolidayDays}`;
+
+                holidayBoxDiv.appendChild(remainingHolidaySpan);
+                statsDiv.appendChild(holidayBoxDiv);
+
                 item.appendChild(nameSpan);
                 item.appendChild(statsDiv);
                 list.appendChild(item);
@@ -320,9 +336,10 @@ function calculateEmployeeYearStats(employeeId, year) {
         holidayDays: 0,
         bankHolidayDays: 0,
         sickDays: 0,
-        offDays: 0
-    };
-    
+        offDays: 0,
+        remainingHolidayDays: 0
+    };    
+
     // Pobierz pierwszy i ostatni dzień roku
     const firstDay = new Date(year, 0, 1);
     const lastDay = new Date(year, 11, 31);
