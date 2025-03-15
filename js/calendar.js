@@ -329,6 +329,7 @@ function updateYearlySummary() {
 }
 
 // Funkcja do obliczania statystyk pracownika w roku
+// Funkcja do obliczania statystyk pracownika w roku
 function calculateEmployeeYearStats(employeeId, year) {
     // Inicjalizacja statystyk
     const stats = {
@@ -377,8 +378,26 @@ function calculateEmployeeYearStats(employeeId, year) {
         currentDate.setDate(currentDate.getDate() + 1);
     }
     
+    // Pobierz pracownika
+    const employee = appState.employees.find(emp => emp.id === employeeId);
+    
+    // Oblicz pozostałe dni urlopowe - użyj dni z konkretnego roku
+    if (employee) {
+        // Sprawdź dni urlopowe dla konkretnego roku
+        let holidayDaysPerYear = appState.settings.defaultHolidayDays || 26;
+        
+        if (employee.holidayDaysByYear && employee.holidayDaysByYear[year]) {
+            holidayDaysPerYear = employee.holidayDaysByYear[year];
+        } else if (employee.holidayDaysPerYear) {
+            holidayDaysPerYear = employee.holidayDaysPerYear;
+        }
+        
+        stats.remainingHolidayDays = holidayDaysPerYear - stats.holidayDays;
+    }
+    
     return stats;
 }
+
 
 // Funkcja do tworzenia lub aktualizacji panelu podsumowania miesięcznego
 function createOrUpdateMonthlySummaryPanel() {

@@ -4,6 +4,34 @@
 function updateScheduleUI() {
     console.log('Updating schedule UI...');
     try {
+        // Ładowanie zapisanych kategorii dla bieżącego tygodnia
+        const weekStart = formatDate(appState.currentWeekStart);
+        const weekKey = `${appState.currentEmployeeId}_week_${weekStart}`;
+        const weekData = appState.schedule[weekKey];
+        
+        if (weekData) {
+            // Ustawienie zapisanych wartości w formularzach
+            if (weekData.category1) {
+                document.getElementById('custom-category-1').value = weekData.category1.name || '';
+                document.getElementById('custom-category-value-1').value = weekData.category1.value || 0;
+            }
+            
+            if (weekData.category2) {
+                document.getElementById('custom-category-2').value = weekData.category2.name || '';
+                document.getElementById('custom-category-value-2').value = weekData.category2.value || 0;
+            }
+        } else {
+            // Wyzeruj pola jeśli nie ma zapisanych danych
+            document.getElementById('custom-category-1').value = '';
+            document.getElementById('custom-category-value-1').value = 0;
+            document.getElementById('custom-category-2').value = '';
+            document.getElementById('custom-category-value-2').value = 0;
+        }
+    } catch (error) {
+        console.error('Błąd ładowania dodatkowych kategorii:', error);
+    }
+    
+    try {
         // Update week display
         document.getElementById('current-week-display').textContent = formatWeekRange();
         
@@ -436,6 +464,28 @@ function saveSchedule() {
         }
     }
     
+    // Zapisz dodatkowe kategorie dla bieżącego tygodnia
+    const category1Name = document.getElementById('custom-category-1').value.trim();
+    const category1Value = parseFloat(document.getElementById('custom-category-value-1').value) || 0;
+    const category2Name = document.getElementById('custom-category-2').value.trim();
+    const category2Value = parseFloat(document.getElementById('custom-category-value-2').value) || 0;
+    
+    // Utwórz klucz dla bieżącego tygodnia i pracownika
+    const weekStart = formatDate(appState.currentWeekStart);
+    const weekKey = `${appState.currentEmployeeId}_week_${weekStart}`;
+    
+    // Zapisz kategorie w appState
+    appState.schedule[weekKey] = {
+        category1: {
+            name: category1Name,
+            value: category1Value
+        },
+        category2: {
+            name: category2Name,
+            value: category2Value
+        }
+    };
+    
     // Save to localStorage
     saveAppData();
     
@@ -454,6 +504,7 @@ function saveSchedule() {
     const language = appState.settings.language;
     alert(translations[language]['schedule-saved']);
 }
+
 // Export week schedule to Excel
 function exportWeekToExcel() {
     // Create workbook and worksheet

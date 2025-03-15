@@ -1,23 +1,32 @@
-// Employees-related functions
-
-// Render employees list - modyfikacja
 function renderEmployeesList() {
     const employeesList = document.getElementById('employees-list');
     employeesList.innerHTML = '';
     
     const language = appState.settings.language;
+    const currentYear = new Date().getFullYear();
     
     appState.employees.forEach(employee => {
         const item = document.createElement('div');
         item.className = 'employee-item';
+        
+        // Przygotuj obiekt holidayDaysByYear jeśli nie istnieje
+        if (!employee.holidayDaysByYear) {
+            employee.holidayDaysByYear = {};
+        }
+        
+        // Pobierz wartość dla bieżącego roku lub wartość domyślną
+        const holidayDaysForCurrentYear = employee.holidayDaysByYear[currentYear] || 
+                                         employee.holidayDaysPerYear || 
+                                         appState.settings.defaultHolidayDays || 
+                                         26;
         
         // Dodaj informację o payroll i średniej godzin
         const payrollText = language === 'pl' ? 'Payroll' : 'Payroll';
         const avgHoursText = language === 'pl' ? 'Średnia godzin/tydzień' : 'Average hours/week';
         const avgDailyText = language === 'pl' ? 'Średnia godzin/dzień' : 'Average hours/day';
         const overrideText = 'Override';
-        const holidayDays = employee.holidayDaysPerYear || appState.settings.defaultHolidayDays || 26;
-        const holidayDaysText = language === 'pl' ? 'Dni urlopowe (rocznie)' : 'Holiday days (yearly)';
+        const holidayDaysText = language === 'pl' ? 'Dni urlopowe' : 'Holiday days';
+        const yearText = language === 'pl' ? 'Rok' : 'Year';
         const payrollValue = employee.payroll ? formatCurrency(employee.payroll) : formatCurrency(0);
         const avgHours = employee.avgHoursPerWeek ? employee.avgHoursPerWeek.toFixed(1) : '0.0';
         const avgDailyHours = employee.avgHoursPerWeek ? (employee.avgHoursPerWeek / 5).toFixed(1) : '0.0';
@@ -33,7 +42,7 @@ function renderEmployeesList() {
                 <span style="margin-left: 20px;">${overrideText}: <input type="number" class="target-hours" data-id="${employee.id}" value="${targetHours}" min="0" max="168" step="0.5" style="width: 60px; padding: 2px 5px;"></span><br>
                 ${avgDailyText}: ${avgDailyHours} 
                 <span style="margin-left: 20px;">${overrideText}: <input type="number" class="target-daily-hours" data-id="${employee.id}" value="${targetDailyHours}" min="0" max="24" step="0.5" style="width: 60px; padding: 2px 5px;"></span>
-                <br>${holidayDaysText}: <input type="number" class="holiday-days" data-id="${employee.id}" value="${holidayDays}" min="0" max="365" style="width: 60px; padding: 2px 5px;">
+                <br>${holidayDaysText} (${yearText}: ${currentYear}): <input type="number" class="holiday-days" data-id="${employee.id}" data-year="${currentYear}" value="${holidayDaysForCurrentYear}" min="0" max="365" style="width: 60px; padding: 2px 5px;">
             </div>
             <div>
                 <button class="btn btn-secondary edit-employee" data-id="${employee.id}">${translations[language]['edit']}</button>
@@ -53,7 +62,8 @@ function renderEmployeesList() {
     document.querySelectorAll('.target-daily-hours').forEach(input => {
         input.addEventListener('change', updateTargetDailyHours);
     });
-    // Dodaj obsługę zdarzeń dla pól dni urlopowych
+    
+    // Zaktualizuj obsługę zdarzeń dla pól dni urlopowych
     document.querySelectorAll('.holiday-days').forEach(input => {
         input.addEventListener('change', updateHolidayDays);
     });
@@ -85,15 +95,26 @@ function updateTargetHours(event) {
     }
 }
 
-// Funkcja do aktualizacji dni urlopowych
+// Zaktualizuj funkcję updateHolidayDays
 function updateHolidayDays(event) {
     const employeeId = Number(event.target.getAttribute('data-id'));
+    const year = Number(event.target.getAttribute('data-year'));
     const holidayDays = parseInt(event.target.value);
     
     // Znajdź pracownika i zaktualizuj wartość
     const employee = appState.employees.find(emp => emp.id === employeeId);
     if (employee) {
+        // Upewnij się, że obiekt holidayDaysByYear istnieje
+        if (!employee.holidayDaysByYear) {
+            employee.holidayDaysByYear = {};
+        }
+        
+        // Zaktualizuj dni urlopowe dla konkretnego roku
+        employee.holidayDaysByYear[year] = holidayDays;
+        
+        // Zachowaj kompatybilność z istniejącym kodem
         employee.holidayDaysPerYear = holidayDays;
+        
         saveAppData();
     }
 }
