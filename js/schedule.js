@@ -289,6 +289,7 @@ function countDaysWithType(type) {
     return count;
 }
 
+// Modyfikacja funkcji updateWeekSummary w js/schedule.js
 function updateWeekSummary() {
     try {
         const totalMinutes = calculateTotalHours();
@@ -326,20 +327,29 @@ function updateWeekSummary() {
                     holidayDays++;
                     if (appState.schedule[scheduleKey].fixedHours) {
                         holidayHoursTotal += appState.schedule[scheduleKey].fixedHours;
+                    } else {
+                        // Jeśli nie ma zapisanej wartości fixedHours, obliczamy ją i zapisujemy
+                        const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
+                        appState.schedule[scheduleKey].fixedHours = baseHours;
+                        holidayHoursTotal += baseHours;
+                        saveAppData(); // Zapisz zmiany
                     }
                 } else if (appState.schedule[scheduleKey].type === 'Bank Holiday') {
                     bankHolidayDays++;
                     if (appState.schedule[scheduleKey].fixedHours) {
                         bankHolidayHoursTotal += appState.schedule[scheduleKey].fixedHours;
+                    } else {
+                        // Jeśli nie ma zapisanej wartości fixedHours, obliczamy ją i zapisujemy
+                        const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
+                        appState.schedule[scheduleKey].fixedHours = baseHours;
+                        bankHolidayHoursTotal += baseHours;
+                        saveAppData(); // Zapisz zmiany
                     }
                 }
             }
         }
         
-        console.log('Holiday days:', holidayDays, 'hours:', holidayHoursTotal);
-        console.log('Bank Holiday days:', bankHolidayDays, 'hours:', bankHolidayHoursTotal);
-        
-        // Oblicz wartości
+        // Reszta funkcji bez zmian...
         const holidayValue = holidayHoursTotal * rate;
         const bankHolidayValue = bankHolidayHoursTotal * rate;
         const regularValue = (regularMinutes / 60) * rate;
@@ -351,7 +361,7 @@ function updateWeekSummary() {
         
         // Oblicz wartość całkowitą
         const totalValue = regularValue + overtimeValue + holidayValue + bankHolidayValue + 
-                           category1Value + category2Value;
+                        category1Value + category2Value;
         const paymentDueValue = totalValue - payroll;
         
         // Aktualizuj UI
@@ -377,7 +387,6 @@ function updateWeekSummary() {
         console.error('Error updating week summary:', error);
     }
 }
-
 // 2. Add event listeners for the custom category value fields
 
 function initCustomCategoryFields() {
