@@ -1,7 +1,6 @@
 // Calendar-related functions
 
 // Update calendar UI
-// Modyfikacja funkcji updateCalendarUI w calendar.js
 function updateCalendarUI() {
     console.log('Updating calendar...');
     try {
@@ -21,132 +20,160 @@ function updateCalendarUI() {
             return;
         }
         
+        // Clear previous content
         tableBody.innerHTML = '';
         
         // Get first day of month
         const firstDay = new Date(appState.currentYear, appState.currentMonth, 1);
         
-        // Get day of week for first day (0-6, adjust Monday to 0)
-        let firstDayOfWeek = firstDay.getDay() || 7;
-        firstDayOfWeek--; // Adjust to 0-6 with Monday as 0
-        
         // Get last day of month
         const lastDay = new Date(appState.currentYear, appState.currentMonth + 1, 0);
         const daysInMonth = lastDay.getDate();
         
-        console.log(`First day of week: ${firstDayOfWeek}, days in month: ${daysInMonth}`);
-        
-        // Create rows and cells for calendar
-        let date = 1;
+        console.log(`Days in month: ${daysInMonth}`);
         
         // Get language
         const language = appState.settings.language || 'pl';
         const bankHolidayText = language === 'pl' ? 'Dzień świąteczny' : 'Bank Holiday';
         
-        // Create rows for calendar
-        for (let i = 0; i < 6; i++) {
-            // Check if we've gone past the last day of the month
-            if (date > daysInMonth) break;
+        // Get day name abbreviations based on language
+        const dayAbbreviations = language === 'pl' 
+            ? ['P', 'W', 'Ś', 'C', 'P', 'S', 'N'] 
+            : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+        
+        // Create header row with days
+        const headerRow = document.createElement('tr');
+        headerRow.className = 'calendar-header-row';
+        
+        // Add empty cell for employee names column
+        const emptyHeaderCell = document.createElement('th');
+        emptyHeaderCell.className = 'employee-name-header';
+        emptyHeaderCell.textContent = language === 'pl' ? 'Pracownik' : 'Employee';
+        headerRow.appendChild(emptyHeaderCell);
+        
+        // Create cells for each day of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(appState.currentYear, appState.currentMonth, day);
+            const dayOfWeek = date.getDay(); // 0 (Sunday) to 6 (Saturday)
+            const dateString = formatDate(date);
             
-            const row = document.createElement('tr');
+            // Check if day is a holiday
+            const isBankHol = isBankHoliday(dateString);
             
-            // Create cells for each day of the week
-            for (let j = 0; j < 7; j++) {
-                const cell = document.createElement('td');
-                
-                // Add date to calendar only if we've reached the first day of month and haven't gone past the last day
-                if ((i === 0 && j < firstDayOfWeek) || date > daysInMonth) {
-                    cell.innerHTML = '';
-                } else {
-                    // Create cell content
-                    const cellDate = new Date(appState.currentYear, appState.currentMonth, date);
-                    const dateString = formatDate(cellDate);
-                    
-                    // Check if day is a holiday
-                    const isBankHol = isBankHoliday(dateString);
-                    if (isBankHol) {
-                        cell.classList.add('bank-holiday');
-                    }
-                    
-                    // Create cell content
-                    let cellContent = `<div class="calendar-date">${date}</div>`;
-                    
-                    // Add holiday label if applicable
-                    if (isBankHol) {
-                        cellContent += `<div class="bank-holiday-label">${bankHolidayText}</div>`;
-                    }
-                    
-                    // Add hours section for employee schedules
-                    cellContent += '<div class="calendar-hours">';
-                    
-                    // Get schedules for all employees on this date
-                    let hasSchedules = false;
-                    appState.employees.forEach(employee => {
-                        const scheduleKey = `${employee.id}_${dateString}`;
-                        const daySchedule = appState.schedule[scheduleKey];
-                        
-                        if (daySchedule) {
-                            hasSchedules = true;
-                            
-                            // Sprawdź typ dnia
-                            const scheduleType = daySchedule.type || '';
-                            let displayText = '';
-                            let typeClass = '';
-                            
-                            if (scheduleType === 'Holiday') {
-                                displayText = 'H';
-                                typeClass = 'holiday-type';
-                            } else if (scheduleType === 'Bank Holiday') {
-                                displayText = 'BH';
-                                typeClass = 'bank-holiday-type';
-                            } else if (scheduleType === 'Home') {
-                                displayText = 'Ho';
-                                typeClass = 'home-type';
-                            } else if (scheduleType === 'Sick') {
-                                displayText = 'S';
-                                typeClass = 'sick-type';
-                            } else if (daySchedule.start && daySchedule.end) {
-                                // Standardowe godziny, jeśli nie ma specjalnego typu
-                                const hours = calculateHours(daySchedule.start, daySchedule.end);
-                                displayText = formatHoursForCalendar(hours);
-                            }
-                            
-                            if (displayText) {
-                                // Określ, czy należy użyć klasy (dla typów) czy nie (dla godzin)
-                                const hoursClass = (typeClass ? typeClass : 'employee-hours');
-                                
-                                // Add employee schedule to cell
-                                cellContent += `
-                                    <div class="employee-schedule">
-                                        <span class="employee-name" data-employee-id="${employee.id}">${employee.name}</span>
-                                        <span class="${hoursClass}">${displayText}</span>
-                                    </div>
-                                `;
-                            }
-                        }
-                    });
-                    
-                    // Close hours section
-                    cellContent += '</div>';
-                    
-                    cell.innerHTML = cellContent;
-                    date++;
-                }
-                
-                row.appendChild(cell);
+            // Create header cell for the day
+            const dayCell = document.createElement('th');
+            dayCell.className = 'calendar-day-header';
+            
+            // Add classes for weekends and holidays
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
+                dayCell.classList.add('weekend-day');
+            }
+            if (isBankHol) {
+                dayCell.classList.add('bank-holiday');
             }
             
-            tableBody.appendChild(row);
+            // Add day number and weekday abbreviation
+            dayCell.innerHTML = `
+                <div class="day-number">${day}</div>
+                <div class="day-letter">${dayAbbreviations[dayOfWeek === 0 ? 6 : dayOfWeek - 1]}</div>
+            `;
+            
+            headerRow.appendChild(dayCell);
         }
         
-        // Highlight selected employee in calendar
-        highlightSelectedEmployee();
+        // Add header row to table
+        tableBody.appendChild(headerRow);
+        
+        // Create a row for each employee
+        appState.employees.forEach(employee => {
+            const employeeRow = document.createElement('tr');
+            employeeRow.className = 'employee-schedule-row';
+            employeeRow.setAttribute('data-employee-id', employee.id);
+            
+            // Selected employee highlight
+            const selectedEmployeeId = Number(document.getElementById('calendar-employee-select').value);
+            if (selectedEmployeeId && employee.id === selectedEmployeeId) {
+                employeeRow.classList.add('highlighted-employee-row');
+            }
+            
+            // Create employee name cell
+            const nameCell = document.createElement('td');
+            nameCell.className = 'employee-name-cell';
+            nameCell.textContent = employee.name;
+            employeeRow.appendChild(nameCell);
+            
+            // Create cells for each day of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(appState.currentYear, appState.currentMonth, day);
+                const dayOfWeek = date.getDay(); // 0 (Sunday) to 6 (Saturday)
+                const dateString = formatDate(date);
+                
+                // Get schedule for this employee on this date
+                const scheduleKey = `${employee.id}_${dateString}`;
+                const daySchedule = appState.schedule[scheduleKey];
+                
+                // Create cell for this day
+                const dayCell = document.createElement('td');
+                dayCell.className = 'calendar-day-cell';
+                
+                // Add classes for weekends and holidays
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    dayCell.classList.add('weekend-day');
+                }
+                if (isBankHoliday(dateString)) {
+                    dayCell.classList.add('bank-holiday');
+                }
+                
+                // Add schedule information if exists
+                if (daySchedule) {
+                    // Sprawdź typ dnia
+                    const scheduleType = daySchedule.type || '';
+                    let displayText = '';
+                    let typeClass = '';
+                    
+                    if (scheduleType === 'Holiday') {
+                        displayText = 'H';
+                        typeClass = 'holiday-type';
+                    } else if (scheduleType === 'Bank Holiday') {
+                        displayText = 'BH';
+                        typeClass = 'bank-holiday-type';
+                    } else if (scheduleType === 'Home') {
+                        displayText = 'Ho';
+                        typeClass = 'home-type';
+                    } else if (scheduleType === 'Sick') {
+                        displayText = 'S';
+                        typeClass = 'sick-type';
+                    } else if (daySchedule.start && daySchedule.end) {
+                        // Standardowe godziny, jeśli nie ma specjalnego typu
+                        const hours = calculateHours(daySchedule.start, daySchedule.end);
+                        displayText = formatHoursForCalendar(hours);
+                    }
+                    
+                    if (displayText) {
+                        const scheduleDiv = document.createElement('div');
+                        scheduleDiv.className = 'day-schedule';
+                        if (typeClass) {
+                            scheduleDiv.classList.add(typeClass);
+                        }
+                        scheduleDiv.textContent = displayText;
+                        dayCell.appendChild(scheduleDiv);
+                    }
+                }
+                
+                employeeRow.appendChild(dayCell);
+            }
+            
+            // Add employee row to table
+            tableBody.appendChild(employeeRow);
+        });
         
         console.log('Calendar updated successfully');
     } catch (error) {
         console.error('Error updating calendar:', error);
     }
 }
+
+// Pozostałe funkcje kalendarza pozostają bez zmian
 
 // Funkcja do tworzenia lub aktualizacji panelu podsumowania tygodniowego
 function createOrUpdateWeeklySummaryPanel() {
@@ -214,8 +241,13 @@ function createOrUpdateWeeklySummaryPanel() {
             summaryPanel.appendChild(title);
             summaryPanel.appendChild(list);
             
-            // Dodaj panel do wrappera treści
-            contentWrapper.appendChild(summaryPanel);
+            // Dodaj panel do wrappera treści PO wrapperze kalendarza
+            const calendarWrapper = contentWrapper.querySelector('.calendar-table-wrapper');
+            if (calendarWrapper) {
+                contentWrapper.appendChild(summaryPanel);
+            } else {
+                contentWrapper.appendChild(summaryPanel);
+            }
         }
         
         // Aktualizuj zawartość podsumowania tygodniowego
@@ -343,19 +375,19 @@ function highlightSelectedEmployee() {
     try {
         const selectedEmployeeId = document.getElementById('calendar-employee-select').value;
         
-        // Znajdź wszystkie elementy nazw pracowników w kalendarzu
-        document.querySelectorAll('.employee-name').forEach(nameElement => {
+        // Znajdź wszystkie wiersze pracowników
+        document.querySelectorAll('.employee-schedule-row').forEach(row => {
             // Usuń istniejące klasy podświetlenia
-            nameElement.classList.remove('highlighted-employee');
+            row.classList.remove('highlighted-employee-row');
             
             // Jeśli wybrano pracownika, podświetl go
             if (selectedEmployeeId) {
                 // Pobierz ID pracownika z atrybutu data
-                const employeeId = nameElement.getAttribute('data-employee-id');
+                const employeeId = row.getAttribute('data-employee-id');
                 
                 // Dodaj podświetlenie, jeśli to wybrany pracownik
                 if (employeeId === selectedEmployeeId) {
-                    nameElement.classList.add('highlighted-employee');
+                    row.classList.add('highlighted-employee-row');
                 }
             }
         });
@@ -363,6 +395,7 @@ function highlightSelectedEmployee() {
         console.error('Błąd podczas podświetlania pracownika:', error);
     }
 }
+
 // Modyfikacja funkcji handleCalendarEmployeeChange
 function handleCalendarEmployeeChange(event) {
     console.log('Zmieniony pracownik w kalendarzu');
