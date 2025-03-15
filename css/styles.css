@@ -188,13 +188,13 @@ input, select {
 
 .week-table th {
     background-color: var(--light-blue);
-    padding: 10px;
+    padding: 5px;
     text-align: left;
     border: 1px solid var(--border-color);
 }
 
 .week-table td {
-    padding: 10px;
+    padding: 5px;
     border: 1px solid var(--border-color);
 }
 
@@ -270,7 +270,7 @@ input, select {
 }
 
 .summary-table th, .summary-table td {
-    padding: 10px;
+    padding: 5px;
     border: 1px solid var(--border-color);
     text-align: left;
 }
@@ -602,7 +602,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 /* Nagłówki dni */
 .calendar-day-header {
     background-color: var(--light-blue);
-    padding: 6px 2px;
+    padding: 4px 2px;
     text-align: center;
     border: 1px solid var(--border-color);
     min-width: 35px;
@@ -638,9 +638,9 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     vertical-align: middle;
     text-align: center;
     border: 1px solid var(--border-color);
-    padding: 5px 3px;
+    padding: 3px 3px;
     position: relative;
-    min-height: 35px;
+    min-height: 30px;
 }
 
 /* Style dla dni weekendowych */
@@ -906,4 +906,8 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .yearly-summary-remaining-holiday {
     font-weight: bold;
     color: var(--primary-color);
+}
+
+table td, table th {
+    line-height: 1.2;
 }
