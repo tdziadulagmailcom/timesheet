@@ -289,105 +289,94 @@ function countDaysWithType(type) {
     return count;
 }
 
-// Update week summary section
 function updateWeekSummary() {
-    const totalMinutes = calculateTotalHours();
-    const regularHoursLimit = appState.settings.regularHoursLimit * 60; // Convert to minutes
-    
-    // Calculate regular and overtime hours
-    const regularMinutes = Math.min(totalMinutes, regularHoursLimit);
-    const overtimeMinutes = Math.max(0, totalMinutes - regularHoursLimit);
-    
-    // Format hours
-    const formatHoursFromMinutes = (minutes) => {
-        const h = Math.floor(minutes / 60);
-        const m = minutes % 60;
+    try {
+        const totalMinutes = calculateTotalHours();
+        const regularHoursLimit = appState.settings.regularHoursLimit * 60;
         
-        // Format as "X hr" when no minutes
-        if (m === 0) {
-            return `${h} hr`;
+        const regularMinutes = Math.min(totalMinutes, regularHoursLimit);
+        const overtimeMinutes = Math.max(0, totalMinutes - regularHoursLimit);
+        
+        // Funkcja pomocnicza do formatowania
+        const formatHoursFromMinutes = (minutes) => {
+            const h = Math.floor(minutes / 60);
+            const m = minutes % 60;
+            return m === 0 ? `${h} hr` : `${h} hr ${m} min`;
+        };
+        
+        // Oblicz wartości dla Holiday i Bank Holiday
+        let holidayDays = 0;
+        let bankHolidayDays = 0;
+        let holidayHoursTotal = 0;
+        let bankHolidayHoursTotal = 0;
+        
+        // Pobierz informację o pracowniku
+        const employee = appState.employees.find(emp => emp.id === Number(appState.currentEmployeeId));
+        const rate = employee ? employee.rate : 0;
+        const payroll = employee ? (employee.payroll || 0) : 0;
+        
+        // Przeszukaj harmonogram dla bieżącego tygodnia
+        for (let i = 0; i < 7; i++) {
+            const date = getDateForDay(i);
+            const dateString = formatDate(date);
+            const scheduleKey = `${appState.currentEmployeeId}_${dateString}`;
+            
+            if (appState.schedule[scheduleKey] && appState.schedule[scheduleKey].type) {
+                if (appState.schedule[scheduleKey].type === 'Holiday') {
+                    holidayDays++;
+                    if (appState.schedule[scheduleKey].fixedHours) {
+                        holidayHoursTotal += appState.schedule[scheduleKey].fixedHours;
+                    }
+                } else if (appState.schedule[scheduleKey].type === 'Bank Holiday') {
+                    bankHolidayDays++;
+                    if (appState.schedule[scheduleKey].fixedHours) {
+                        bankHolidayHoursTotal += appState.schedule[scheduleKey].fixedHours;
+                    }
+                }
+            }
         }
         
-        // Format as "X hr Y min" when there are minutes
-        return `${h} hr ${m} min`;
-    };
-    
-    // Policz dni Holiday i Bank Holiday
-    const holidayDays = countDaysWithType('Holiday');
-    const bankHolidayDays = countDaysWithType('Bank Holiday');
-    
-    // Get employee rate and payroll
-    const employee = appState.employees.find(emp => emp.id === Number(appState.currentEmployeeId));
-    const rate = employee ? employee.rate : 0;
-    const payroll = employee ? (employee.payroll || 0) : 0;
-    
-    // Oblicz wartość za dni Holiday i Bank Holiday
-    const baseHoursPerDay = getBaseHoursForEmployee(appState.currentEmployeeId, true);
-    const holidayValue = holidayDays * baseHoursPerDay * rate;
-    const bankHolidayValue = bankHolidayDays * baseHoursPerDay * rate;
-    
-    // Get custom category values
-    const category1Value = parseFloat(document.getElementById('custom-category-value-1').value) || 0;
-    const category2Value = parseFloat(document.getElementById('custom-category-value-2').value) || 0;
-    
-    // Calculate values
-    const regularValue = (regularMinutes / 60) * rate;
-    const overtimeValue = (overtimeMinutes / 60) * rate * appState.settings.overtimeRateMultiplier;
-    
-    // Calculate total without subtracting payroll, dodaj wartości za Holiday i Bank Holiday
-    const totalValue = regularValue + overtimeValue + holidayValue + bankHolidayValue + category1Value + category2Value;
-    
-    // Calculate payment due (total minus payroll)
-    const paymentDueValue = totalValue - payroll;
-    
-    // Update the summary table
-    document.getElementById('regular-hours').textContent = formatHoursFromMinutes(regularMinutes);
-    document.getElementById('overtime-hours').textContent = formatHoursFromMinutes(overtimeMinutes);
-    
-    // Aktualizuj dni i wartości Holiday i Bank Holiday
-    document.getElementById('holiday-days').textContent = holidayDays;
-    document.getElementById('bank-holiday-days').textContent = bankHolidayDays;
-    document.getElementById('holiday-value').textContent = formatCurrency(holidayValue);
-    document.getElementById('bank-holiday-value').textContent = formatCurrency(bankHolidayValue);
-    
-    document.getElementById('total-hours').textContent = formatHoursFromMinutes(totalMinutes);
-    
-    document.getElementById('regular-value').textContent = formatCurrency(regularValue);
-    document.getElementById('overtime-value').textContent = formatCurrency(overtimeValue);
-    document.getElementById('total-value').textContent = formatCurrency(totalValue);
-    document.getElementById('payroll-value').textContent = formatCurrency(payroll);
-    document.getElementById('payment-due-value').textContent = formatCurrency(paymentDueValue);
-
-    // Check if values are negative and add/remove class accordingly
-    const totalValueElement = document.getElementById('total-value');
-    if (totalValue < 0) {
-        totalValueElement.classList.add('negative');
-    } else {
-        totalValueElement.classList.remove('negative');
-    }
-
-    const paymentDueValueElement = document.getElementById('payment-due-value');
-    if (paymentDueValue < 0) {
-        paymentDueValueElement.classList.add('negative');
-    } else {
-        paymentDueValueElement.classList.remove('negative');
-    }
-
-    const regularValueElement = document.getElementById('regular-value');
-    if (regularValue < 0) {
-        regularValueElement.classList.add('negative');
-    } else {
-        regularValueElement.classList.remove('negative');
-    }
-
-    const overtimeValueElement = document.getElementById('overtime-value');
-    if (overtimeValue < 0) {
-        overtimeValueElement.classList.add('negative');
-    } else {
-        overtimeValueElement.classList.remove('negative');
+        console.log('Holiday days:', holidayDays, 'hours:', holidayHoursTotal);
+        console.log('Bank Holiday days:', bankHolidayDays, 'hours:', bankHolidayHoursTotal);
+        
+        // Oblicz wartości
+        const holidayValue = holidayHoursTotal * rate;
+        const bankHolidayValue = bankHolidayHoursTotal * rate;
+        const regularValue = (regularMinutes / 60) * rate;
+        const overtimeValue = (overtimeMinutes / 60) * rate * appState.settings.overtimeRateMultiplier;
+        
+        // Pobierz wartości dodatkowych kategorii
+        const category1Value = parseFloat(document.getElementById('custom-category-value-1').value) || 0;
+        const category2Value = parseFloat(document.getElementById('custom-category-value-2').value) || 0;
+        
+        // Oblicz wartość całkowitą
+        const totalValue = regularValue + overtimeValue + holidayValue + bankHolidayValue + 
+                           category1Value + category2Value;
+        const paymentDueValue = totalValue - payroll;
+        
+        // Aktualizuj UI
+        document.getElementById('regular-hours').textContent = formatHoursFromMinutes(regularMinutes);
+        document.getElementById('overtime-hours').textContent = formatHoursFromMinutes(overtimeMinutes);
+        document.getElementById('holiday-days').textContent = holidayDays;
+        document.getElementById('bank-holiday-days').textContent = bankHolidayDays;
+        document.getElementById('holiday-value').textContent = formatCurrency(holidayValue);
+        document.getElementById('bank-holiday-value').textContent = formatCurrency(bankHolidayValue);
+        document.getElementById('total-hours').textContent = formatHoursFromMinutes(totalMinutes);
+        document.getElementById('regular-value').textContent = formatCurrency(regularValue);
+        document.getElementById('overtime-value').textContent = formatCurrency(overtimeValue);
+        document.getElementById('total-value').textContent = formatCurrency(totalValue);
+        document.getElementById('payroll-value').textContent = formatCurrency(payroll);
+        document.getElementById('payment-due-value').textContent = formatCurrency(paymentDueValue);
+        
+        // Zarządzanie klasami dla wartości ujemnych
+        document.getElementById('total-value').classList.toggle('negative', totalValue < 0);
+        document.getElementById('payment-due-value').classList.toggle('negative', paymentDueValue < 0);
+        document.getElementById('regular-value').classList.toggle('negative', regularValue < 0);
+        document.getElementById('overtime-value').classList.toggle('negative', overtimeValue < 0);
+    } catch (error) {
+        console.error('Error updating week summary:', error);
     }
 }
-
 
 // 2. Add event listeners for the custom category value fields
 
@@ -604,84 +593,81 @@ function updateTypeForDay(event) {
     try {
         const selectedType = event.target.value;
         const dayIndex = event.target.getAttribute('data-day');
+        const date = getDateForDay(dayIndex);
+        const dateString = formatDate(date);
+        const scheduleKey = `${appState.currentEmployeeId}_${dateString}`;
         
-        // Find row and modify based on selected type
+        // Znajdź elementy wiersza
         const row = event.target.closest('tr');
-        if (row) {
-            // Reset classes first
-            row.classList.remove('bank-holiday');
-            
-            // Apply specific styling based on type
+        const hoursCell = row.querySelector(`.hours-cell`);
+        const startInput = row.querySelector(`.start-time`);
+        const endInput = row.querySelector(`.end-time`);
+        
+        // Znajdź selektory niestandardowe
+        const timeSelects = row.querySelectorAll('.custom-time-select');
+        
+        // Usuń klasę bank-holiday
+        row.classList.remove('bank-holiday');
+        
+        // Przygotuj obiekt harmonogramu
+        if (!appState.schedule[scheduleKey]) {
+            appState.schedule[scheduleKey] = {};
+        }
+        
+        // Zapisz typ
+        appState.schedule[scheduleKey].type = selectedType;
+        
+        if (selectedType === 'Holiday' || selectedType === 'Bank Holiday') {
+            // Dodaj klasę dla Bank Holiday
             if (selectedType === 'Bank Holiday') {
                 row.classList.add('bank-holiday');
             }
             
-            // Znajdź pola czasowe i komórkę godzin
-            const hoursCell = row.querySelector(`.hours-cell`);
-            const startInput = row.querySelector(`.start-time`);
-            const endInput = row.querySelector(`.end-time`);
+            // Zapisz stałą wartość godzin
+            const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
+            appState.schedule[scheduleKey].fixedHours = baseHours;
             
-            // Znajdź selektory niestandardowe
-            const startTimeSelect = row.querySelector('.custom-time-select[data-type="start"]');
-            const endTimeSelect = row.querySelector('.custom-time-select[data-type="end"]');
+            // Ustaw pola czasu na 00:00
+            startInput.value = '00:00';
+            endInput.value = '00:00';
+            appState.schedule[scheduleKey].start = '00:00';
+            appState.schedule[scheduleKey].end = '00:00';
             
-            if (hoursCell) {
-                if (selectedType === 'Holiday' || selectedType === 'Bank Holiday') {
-                    // Wyzeruj pola start i end
-                    if (startInput) startInput.value = '00:00';
-                    if (endInput) endInput.value = '00:00';
-                    
-                    // Zaktualizuj selektory niestandardowe
-                    if (startTimeSelect) {
-                        const hourSelect = startTimeSelect.querySelector('.hour-select');
-                        const minuteSelect = startTimeSelect.querySelector('.minute-select');
-                        if (hourSelect) hourSelect.value = '00';
-                        if (minuteSelect) minuteSelect.value = '00';
-                    }
-                    
-                    if (endTimeSelect) {
-                        const hourSelect = endTimeSelect.querySelector('.hour-select');
-                        const minuteSelect = endTimeSelect.querySelector('.minute-select');
-                        if (hourSelect) hourSelect.value = '00';
-                        if (minuteSelect) minuteSelect.value = '00';
-                    }
-                    
-                    // Wyświetl "- -" zamiast godzin
-                    hoursCell.textContent = "- -";
-                } else {
-                    // Jeśli zmiana z Holiday/Bank Holiday na inny typ
-                    if ((!startInput.value || startInput.value === '00:00') && 
-                        (!endInput.value || endInput.value === '00:00')) {
-                        // Wyczyść pola, jeśli były ustawione na 00:00
-                        startInput.value = '';
-                        endInput.value = '';
-                        hoursCell.textContent = '';
-                        
-                        // Zaktualizuj selektory niestandardowe
-                        if (startTimeSelect) {
-                            const hourSelect = startTimeSelect.querySelector('.hour-select');
-                            const minuteSelect = startTimeSelect.querySelector('.minute-select');
-                            if (hourSelect) hourSelect.selectedIndex = 0;
-                            if (minuteSelect) minuteSelect.selectedIndex = 0;
-                        }
-                        
-                        if (endTimeSelect) {
-                            const hourSelect = endTimeSelect.querySelector('.hour-select');
-                            const minuteSelect = endTimeSelect.querySelector('.minute-select');
-                            if (hourSelect) hourSelect.selectedIndex = 0;
-                            if (minuteSelect) minuteSelect.selectedIndex = 0;
-                        }
-                    } else if (startInput.value && endInput.value) {
-                        // Standardowe obliczanie godzin
-                        const hours = calculateHours(startInput.value, endInput.value);
-                        hoursCell.textContent = formatHoursForDisplay(hours);
-                    }
-                }
+            // Aktualizuj selektory niestandardowe
+            timeSelects.forEach(select => {
+                const hourSelect = select.querySelector('.hour-select');
+                const minuteSelect = select.querySelector('.minute-select');
+                if (hourSelect) hourSelect.value = '00';
+                if (minuteSelect) minuteSelect.value = '00';
+            });
+            
+            // Wyświetl "- -" w komórce godzin
+            hoursCell.textContent = "- -";
+        } else {
+            // Dla innych typów
+            if (startInput.value && endInput.value) {
+                // Oblicz godziny jak zwykle
+                const hours = calculateHours(startInput.value, endInput.value);
+                hoursCell.textContent = formatHoursForDisplay(hours);
                 
-                // Aktualizuj podsumowanie
-                updateWeekSummary();
+                // Zapisz wartości
+                appState.schedule[scheduleKey].start = startInput.value;
+                appState.schedule[scheduleKey].end = endInput.value;
+                delete appState.schedule[scheduleKey].fixedHours;
+            } else {
+                hoursCell.textContent = '';
+                appState.schedule[scheduleKey].start = '';
+                appState.schedule[scheduleKey].end = '';
+                delete appState.schedule[scheduleKey].fixedHours;
             }
         }
+        
+        // Zapisz zmiany do localStorage
+        saveAppData();
+        
+        // Aktualizuj podsumowanie
+        updateWeekSummary();
+        
     } catch (error) {
         console.error('Error updating type for day:', error);
     }
