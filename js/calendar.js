@@ -10,9 +10,12 @@ function updateCalendarUI() {
             monthDisplay.textContent = formatMonthYear(appState.currentMonth, appState.currentYear);
         }
         
-        // Create or update the weekly summary panel
+        // Create or update the monthly summary panel
         createOrUpdateMonthlySummaryPanel();
         
+        // Create or update the yearly summary panel
+        createOrUpdateYearlySummaryPanel();
+             
         // Get calendar table body
         const tableBody = document.getElementById('calendar-table-body');
         if (!tableBody) {
@@ -143,6 +146,9 @@ function updateCalendarUI() {
                     } else if (scheduleType === 'Sick') {
                         displayText = 'S';
                         typeClass = 'sick-type';
+                    } else if (scheduleType === 'Off') {
+                        displayText = 'O';
+                        typeClass = 'off-type';
                     } else if (daySchedule.start && daySchedule.end) {
                         // Standardowe godziny, jeśli nie ma specjalnego typu
                         const hours = calculateHours(daySchedule.start, daySchedule.end);
@@ -174,6 +180,188 @@ function updateCalendarUI() {
 }
 
 // Pozostałe funkcje kalendarza pozostają bez zmian
+
+// Funkcja do tworzenia lub aktualizacji panelu podsumowania rocznego
+function createOrUpdateYearlySummaryPanel() {
+    try {
+        // Sprawdź czy istnieje panel miesięczny, po którym możemy dodać roczny
+        const monthlySummaryPanel = document.querySelector('.monthly-summary-panel');
+        if (!monthlySummaryPanel) {
+            console.error('Nie znaleziono panelu podsumowania miesięcznego');
+            return;
+        }
+        
+        // Sprawdź czy panel roczny już istnieje, jeśli nie, utwórz go
+        let yearlySummaryPanel = document.querySelector('.yearly-summary-panel');
+        if (!yearlySummaryPanel) {
+            // Utwórz panel podsumowania
+            yearlySummaryPanel = document.createElement('div');
+            yearlySummaryPanel.className = 'yearly-summary-panel';
+            
+            // Utwórz tytuł
+            const title = document.createElement('div');
+            title.className = 'yearly-summary-title';
+            title.id = 'yearly-summary-title';
+            const language = appState.settings.language || 'pl';
+            title.textContent = language === 'pl' ? 'Podsumowanie roczne' : 'Yearly Summary';
+            
+            // Utwórz listę
+            const list = document.createElement('div');
+            list.className = 'yearly-summary-list';
+            list.id = 'yearly-summary-list';
+            
+            // Złóż panel
+            yearlySummaryPanel.appendChild(title);
+            yearlySummaryPanel.appendChild(list);
+            
+            // Dodaj panel po panelu miesięcznym
+            monthlySummaryPanel.parentNode.insertBefore(yearlySummaryPanel, monthlySummaryPanel.nextSibling);
+        }
+        
+        // Aktualizuj zawartość podsumowania rocznego
+        updateYearlySummary();
+    } catch (error) {
+        console.error('Błąd podczas tworzenia panelu podsumowania rocznego:', error);
+    }
+}
+
+// Funkcja do aktualizacji podsumowania rocznego
+function updateYearlySummary() {
+    try {
+        const list = document.getElementById('yearly-summary-list');
+        if (!list) return;
+        
+        list.innerHTML = '';
+        
+        // Pobierz bieżący rok
+        const year = appState.currentYear;
+        
+        // Pobierz ID wybranego pracownika
+        const selectedEmployeeId = Number(document.getElementById('calendar-employee-select').value);
+        
+        // Nagłówek roku
+        const language = appState.settings.language || 'pl';
+        
+        const yearHeader = document.createElement('div');
+        yearHeader.className = 'yearly-summary-header';
+        yearHeader.textContent = language === 'pl' ? `Rok: ${year}` : `Year: ${year}`;
+        list.appendChild(yearHeader);
+        
+        // Oblicz statystyki dla każdego pracownika
+        appState.employees.forEach(employee => {
+            // Oblicz statystyki roczne dla pracownika
+            const stats = calculateEmployeeYearStats(employee.id, year);
+            
+            // Jeśli pracownik ma jakieś dni pracy lub specjalne dni w roku, pokaż go
+            if (stats.totalHours > 0 || stats.holidayDays > 0 || stats.bankHolidayDays > 0 || stats.sickDays > 0 || stats.offDays > 0) {
+                // Utwórz wiersz pracownika
+                const item = document.createElement('div');
+                item.className = 'yearly-summary-item';
+                
+                // Podświetl, jeśli to wybrany pracownik
+                if (employee.id === selectedEmployeeId) {
+                    item.classList.add('highlighted');
+                }
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'yearly-summary-name';
+                nameSpan.textContent = employee.name;
+                
+                const statsDiv = document.createElement('div');
+                statsDiv.className = 'yearly-summary-stats';
+                
+                // Godziny pracy
+                const hoursSpan = document.createElement('span');
+                hoursSpan.className = 'yearly-summary-hours yearly-summary-stat';
+                const hoursLabel = language === 'pl' ? 'Suma godzin: ' : 'Total hours: ';
+                hoursSpan.textContent = `${hoursLabel}${stats.totalHours.toFixed(1)} h`;
+                
+                // Holiday
+                const holidaySpan = document.createElement('span');
+                holidaySpan.className = 'yearly-summary-holiday yearly-summary-stat';
+                holidaySpan.textContent = `Holiday: ${stats.holidayDays}`;
+                
+                // Bank Holiday
+                const bankHolidaySpan = document.createElement('span');
+                bankHolidaySpan.className = 'yearly-summary-bank-holiday yearly-summary-stat';
+                bankHolidaySpan.textContent = `Bank Holiday: ${stats.bankHolidayDays}`;
+                
+                // Sick
+                const sickSpan = document.createElement('span');
+                sickSpan.className = 'yearly-summary-sick yearly-summary-stat';
+                sickSpan.textContent = `Sick: ${stats.sickDays}`;
+                
+                // Off
+                const offSpan = document.createElement('span');
+                offSpan.className = 'yearly-summary-off yearly-summary-stat';
+                offSpan.textContent = `Days Off: ${stats.offDays}`;
+                
+                statsDiv.appendChild(hoursSpan);
+                statsDiv.appendChild(holidaySpan);
+                statsDiv.appendChild(bankHolidaySpan);
+                statsDiv.appendChild(sickSpan);
+                statsDiv.appendChild(offSpan);
+                
+                item.appendChild(nameSpan);
+                item.appendChild(statsDiv);
+                list.appendChild(item);
+            }
+        });
+    } catch (error) {
+        console.error('Błąd podczas aktualizacji podsumowania rocznego:', error);
+    }
+}
+
+// Funkcja do obliczania statystyk pracownika w roku
+function calculateEmployeeYearStats(employeeId, year) {
+    // Inicjalizacja statystyk
+    const stats = {
+        totalHours: 0,
+        holidayDays: 0,
+        bankHolidayDays: 0,
+        sickDays: 0,
+        offDays: 0
+    };
+    
+    // Pobierz pierwszy i ostatni dzień roku
+    const firstDay = new Date(year, 0, 1);
+    const lastDay = new Date(year, 11, 31);
+    
+    // Inicjalizacja daty bieżącej
+    const currentDate = new Date(firstDay);
+    
+    // Pętla przez każdy dzień roku
+    while (currentDate <= lastDay) {
+        const dateString = formatDate(currentDate);
+        const scheduleKey = `${employeeId}_${dateString}`;
+        const daySchedule = appState.schedule[scheduleKey];
+        
+        if (daySchedule) {
+            // Sprawdź typ dnia
+            if (daySchedule.type === 'Holiday') {
+                stats.holidayDays++;
+            } else if (daySchedule.type === 'Bank Holiday') {
+                stats.bankHolidayDays++;
+            } else if (daySchedule.type === 'Sick') {
+                stats.sickDays++;
+            } else if (daySchedule.type === 'Off') {
+                stats.offDays++;
+            } else if (daySchedule.start && daySchedule.end) {
+                // Oblicz godziny dla standardowego dnia pracy
+                const hoursStr = calculateHours(daySchedule.start, daySchedule.end);
+                if (hoursStr) {
+                    const [hours, minutes] = hoursStr.split(':').map(Number);
+                    stats.totalHours += hours + (minutes / 60);
+                }
+            }
+        }
+        
+        // Przejdź do następnego dnia
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return stats;
+}
 
 // Funkcja do tworzenia lub aktualizacji panelu podsumowania miesięcznego
 function createOrUpdateMonthlySummaryPanel() {
@@ -293,8 +481,7 @@ function updateMonthlySummary() {
             const stats = calculateEmployeeMonthStats(employee.id, month, year);
             
             // Jeśli pracownik ma jakieś dni pracy lub specjalne dni w miesiącu, pokaż go
-            if (stats.totalHours > 0 || stats.holidayDays > 0 || stats.bankHolidayDays > 0 || stats.sickDays > 0) {
-                // Utwórz wiersz pracownika
+            if (stats.totalHours > 0 || stats.holidayDays > 0 || stats.bankHolidayDays > 0 || stats.sickDays > 0 || stats.offDays > 0) {                // Utwórz wiersz pracownika
                 const item = document.createElement('div');
                 item.className = 'monthly-summary-item';
                 
@@ -327,15 +514,21 @@ function updateMonthlySummary() {
                 bankHolidaySpan.textContent = `Bank Holiday: ${stats.bankHolidayDays}`;
                 
                 // Sick
+                // Sick
                 const sickSpan = document.createElement('span');
                 sickSpan.className = 'monthly-summary-sick monthly-summary-stat';
                 sickSpan.textContent = `Sick: ${stats.sickDays}`;
-                
+
+                // Off
+                const offSpan = document.createElement('span');
+                offSpan.className = 'yearly-summary-off monthly-summary-stat';
+                offSpan.textContent = `Days Off: ${stats.offDays}`;
+
                 statsDiv.appendChild(hoursSpan);
                 statsDiv.appendChild(holidaySpan);
                 statsDiv.appendChild(bankHolidaySpan);
                 statsDiv.appendChild(sickSpan);
-                
+                statsDiv.appendChild(offSpan);                
                 item.appendChild(nameSpan);
                 item.appendChild(statsDiv);
                 list.appendChild(item);
@@ -353,7 +546,8 @@ function calculateEmployeeMonthStats(employeeId, month, year) {
         totalHours: 0,
         holidayDays: 0,
         bankHolidayDays: 0,
-        sickDays: 0
+        sickDays: 0,
+        offDays: 0
     };
     
     // Pobierz pierwszy i ostatni dzień miesiąca
@@ -377,8 +571,9 @@ function calculateEmployeeMonthStats(employeeId, month, year) {
                 stats.bankHolidayDays++;
             } else if (daySchedule.type === 'Sick') {
                 stats.sickDays++;
-            } else if (daySchedule.start && daySchedule.end) {
-                // Oblicz godziny dla standardowego dnia pracy
+            } else if (daySchedule.type === 'Off') {
+                stats.offDays++;
+            } else if (daySchedule.start && daySchedule.end) {                // Oblicz godziny dla standardowego dnia pracy
                 const hoursStr = calculateHours(daySchedule.start, daySchedule.end);
                 if (hoursStr) {
                     const [hours, minutes] = hoursStr.split(':').map(Number);
@@ -452,12 +647,12 @@ function handleCalendarEmployeeChange(event) {
     console.log('Zmieniony pracownik w kalendarzu');
     appState.currentEmployeeId = Number(event.target.value);
     
-    // Aktualizuj podsumowanie miesięczne i podświetlenie wybranego pracownika
+    // Aktualizuj podsumowanie miesięczne, roczne i podświetlenie wybranego pracownika
     updateMonthlySummary();
+    updateYearlySummary();
     highlightSelectedEmployee();
 }
 
-// Navigate to previous month in calendar
 function navigateToPreviousMonth() {
     console.log('Going to previous month');
     try {
@@ -468,12 +663,13 @@ function navigateToPreviousMonth() {
         }
         console.log(`New month: ${appState.currentMonth + 1}, year: ${appState.currentYear}`);
         updateCalendarUI();
+        // Aktualizuj podsumowanie roczne przy zmianie roku
+        updateYearlySummary();
     } catch (error) {
         console.error('Error navigating to previous month:', error);
     }
 }
 
-// Navigate to next month in calendar
 function navigateToNextMonth() {
     console.log('Going to next month');
     try {
@@ -484,6 +680,8 @@ function navigateToNextMonth() {
         }
         console.log(`New month: ${appState.currentMonth + 1}, year: ${appState.currentYear}`);
         updateCalendarUI();
+        // Aktualizuj podsumowanie roczne przy zmianie roku
+        updateYearlySummary();
     } catch (error) {
         console.error('Error navigating to next month:', error);
     }
