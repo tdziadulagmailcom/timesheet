@@ -103,20 +103,6 @@ function updateScheduleUI() {
                 select.querySelectorAll('select').forEach(s => s.disabled = true);
             });
 
-            // Pokaż lub ukryj wskaźnik blokady w zależności od stanu blokady
-            const lockIndicator = document.getElementById('schedule-lock-indicator');
-            if (lockIndicator) {
-                if (locked) {
-                    lockIndicator.classList.remove('hidden');
-                    lockIndicator.textContent = appState.settings.language === 'pl' ?
-                        'Harmonogram zablokowany (używane są zapisane stawki)' :
-                        'Schedule locked (saved rates are used)';
-                } else {
-                    lockIndicator.classList.add('hidden');
-                }
-            }
-
-
         } else {
             // Odblokowuj pola formularza
             document.querySelectorAll('.start-time, .end-time, .type-select, .custom-category-text, .custom-category-value').forEach(input => {
@@ -129,11 +115,6 @@ function updateScheduleUI() {
                 select.querySelectorAll('select').forEach(s => s.disabled = false);
             });
 
-            // Ukryj wskaźnik blokady
-            const lockIndicator = document.getElementById('schedule-lock-indicator');
-            if (lockIndicator) {
-                lockIndicator.classList.add('hidden');
-            }
         }
 
         // Pokaż lub ukryj przycisk "Odblokuj harmonogram" w zależności od stanu blokady
@@ -567,12 +548,6 @@ function unlockSchedule() {
         input.disabled = false;
     });
     
-    // Dodaj bezpośrednie ukrycie wskaźnika
-    const lockIndicator = document.getElementById('schedule-lock-indicator');
-    if (lockIndicator) {
-        lockIndicator.classList.add('hidden');
-    }
-
     // Włącz niestandardowe selektory czasu
     document.querySelectorAll('.custom-time-select').forEach(select => {
         select.classList.remove('disabled');

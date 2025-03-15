@@ -1034,19 +1034,6 @@ table td, table th {
     font-style: italic;
 }
 
-/* Style dla wskaźnika blokady harmonogramu */
-.locked-schedule-indicator {
-    background-color: #f8d7da;
-    color: #721c24;
-    padding: 5px 10px;
-    margin-left: 10px;
-    border-radius: 4px;
-    font-weight: bold;
-    display: inline-block;
-    font-size: 14px;
-    vertical-align: middle;
-}
-
 /* Style dla zablokowanych wierszy harmonogramu */
 .week-table tr.locked-row {
     background-color: #f8f9fa;
