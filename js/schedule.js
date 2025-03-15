@@ -8,14 +8,14 @@ function updateScheduleUI() {
         const weekStart = formatDate(appState.currentWeekStart);
         const weekKey = `${appState.currentEmployeeId}_week_${weekStart}`;
         const weekData = appState.schedule[weekKey];
-        
+
         if (weekData) {
             // Ustawienie zapisanych wartości w formularzach
             if (weekData.category1) {
                 document.getElementById('custom-category-1').value = weekData.category1.name || '';
                 document.getElementById('custom-category-value-1').value = weekData.category1.value || 0;
             }
-            
+
             if (weekData.category2) {
                 document.getElementById('custom-category-2').value = weekData.category2.name || '';
                 document.getElementById('custom-category-value-2').value = weekData.category2.value || 0;
@@ -30,39 +30,39 @@ function updateScheduleUI() {
     } catch (error) {
         console.error('Błąd ładowania dodatkowych kategorii:', error);
     }
-    
+
     try {
         // Update week display
         document.getElementById('current-week-display').textContent = formatWeekRange();
-        
+
         // Get schedule table body
         const tableBody = document.getElementById('schedule-table-body');
         tableBody.innerHTML = '';
-        
+
         // Create row for each day of the week
         const language = appState.settings.language;
         const days = translations[language]['days'];
-        
+
         for (let i = 0; i < 7; i++) {
             const date = getDateForDay(i);
             const dateString = formatDate(date);
-            
+
             // Get saved schedule for this day, if it exists
             const scheduleKey = `${appState.currentEmployeeId}_${dateString}`;
             const daySchedule = appState.schedule[scheduleKey] || { start: '', end: '', type: '' };
-            
+
             const row = document.createElement('tr');
-            
+
             // Check if day is a holiday
             const isBankHol = isBankHoliday(dateString);
             if (isBankHol) {
                 row.classList.add('bank-holiday');
             }
-            
+
             // Calculate hours in new format (X hr)
             const hoursValue = calculateHours(daySchedule.start, daySchedule.end);
             const formattedHours = hoursValue ? formatHoursForDisplay(hoursValue) : '';
-            
+
             row.innerHTML = `
                 <td>${days[i]}${isBankHol ? `<br><span class="bank-holiday-label">${translations[language]['bank-holiday']}</span>` : ''}</td>
                 <td>${formatDateForDisplay(date)}</td>
@@ -80,50 +80,49 @@ function updateScheduleUI() {
                 <td><input type="time" class="end-time" data-day="${i}" value="${daySchedule.end}" step="900"></td>
                 <td class="hours-cell" data-day="${i}">${formattedHours}</td>
             `;
-            
+
             tableBody.appendChild(row);
         }
-        
+
         // Add event listeners to time inputs
         initScheduleInputs();
-        
+
         // Sprawdź, czy harmonogram jest zablokowany
         const locked = isScheduleLocked();
-    
+        console.log('Status blokady harmonogramu:', locked);
+
         if (locked) {
             // Wyłącz wszystkie pola formularza
             document.querySelectorAll('.start-time, .end-time, .type-select, .custom-category-text, .custom-category-value').forEach(input => {
                 input.disabled = true;
             });
-    
+
             // Wyłącz niestandardowe selektory czasu
             document.querySelectorAll('.custom-time-select').forEach(select => {
                 select.classList.add('disabled');
                 select.querySelectorAll('select').forEach(s => s.disabled = true);
-         });
-    
+            });
+
             // Pokaż wskaźnik blokady
             const lockIndicator = document.getElementById('schedule-lock-indicator');
             if (lockIndicator) {
                 lockIndicator.classList.remove('hidden');
-                lockIndicator.textContent = appState.settings.language === 'pl' ? 
-                    '🔒 Zablokowany' : 
+                lockIndicator.textContent = appState.settings.language === 'pl' ?
+                    '🔒 Zablokowany' :
                     '🔒 Locked';
             }
-        }   
-        
-        else {
+        } else {
             // Odblokowuj pola formularza
             document.querySelectorAll('.start-time, .end-time, .type-select, .custom-category-text, .custom-category-value').forEach(input => {
                 input.disabled = false;
             });
-        
+
             // Włącz niestandardowe selektory czasu
             document.querySelectorAll('.custom-time-select').forEach(select => {
                 select.classList.remove('disabled');
                 select.querySelectorAll('select').forEach(s => s.disabled = false);
             });
-        
+
             // Ukryj wskaźnik blokady
             const lockIndicator = document.getElementById('schedule-lock-indicator');
             if (lockIndicator) {
@@ -131,9 +130,19 @@ function updateScheduleUI() {
             }
         }
 
+        // Pokaż lub ukryj przycisk "Odblokuj harmonogram" w zależności od stanu blokady
+        const unlockButton = document.getElementById('unlock-schedule');
+        if (unlockButton) {
+            if (locked) {
+                unlockButton.classList.remove('hidden');
+            } else {
+                unlockButton.classList.add('hidden');
+            }
+        }
+
         // Update summary
         updateWeekSummary();
-        
+
         console.log('Schedule UI updated successfully');
     } catch (error) {
         console.error('Error updating schedule UI:', error);
@@ -550,6 +559,12 @@ function unlockSchedule() {
         input.disabled = false;
     });
     
+    // Dodaj bezpośrednie ukrycie wskaźnika
+    const lockIndicator = document.getElementById('schedule-lock-indicator');
+    if (lockIndicator) {
+        lockIndicator.classList.add('hidden');
+    }
+
     // Włącz niestandardowe selektory czasu
     document.querySelectorAll('.custom-time-select').forEach(select => {
         select.classList.remove('disabled');
@@ -663,14 +678,8 @@ function saveSchedule() {
     // Update calendar
     updateCalendarUI();
     
-    // Po zapisaniu natychmiast zaktualizuj UI, aby pokazać, że harmonogram jest zablokowany
-    const lockIndicator = document.getElementById('schedule-lock-indicator');
-    if (lockIndicator) {
-        lockIndicator.classList.remove('hidden');
-        lockIndicator.textContent = appState.settings.language === 'pl' ? 
-            '🔒 Zablokowany' : 
-            '🔒 Locked';
-    }
+    // Zamiast bezpośrednio manipulować wskaźnikiem, zaktualizuj cały UI
+    updateScheduleUI();
 
     // Wyłącz pola formularza
     document.querySelectorAll('.start-time, .end-time, .type-select, .custom-category-text, .custom-category-value').forEach(input => {
