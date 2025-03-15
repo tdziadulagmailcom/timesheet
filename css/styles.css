@@ -674,16 +674,30 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 
 /* Style dla typów harmonogramu */
 .holiday-type, .bank-holiday-type {
+    background-color: #e6ffe6; /* jasny zielony */
     color: #228B22; /* zielony */
     font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 3px;
 }
 
 .home-type {
+    background-color: #e6f0ff; /* jasny niebieski */
     color: #1a73e8; /* niebieski */
     font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 3px;
 }
 
 .sick-type {
+    background-color: #ffe6e6; /* jasny czerwony */
     color: #ea4335; /* czerwony */
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+/* Pogrubienie dla godzin w kalendarzu */
+.employee-hours {
     font-weight: bold;
 }

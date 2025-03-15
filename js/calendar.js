@@ -112,11 +112,14 @@ function updateCalendarUI() {
                             }
                             
                             if (displayText) {
+                                // Określ, czy należy użyć klasy (dla typów) czy nie (dla godzin)
+                                const hoursClass = (typeClass ? typeClass : 'employee-hours');
+                                
                                 // Add employee schedule to cell
                                 cellContent += `
                                     <div class="employee-schedule">
                                         <span class="employee-name" data-employee-id="${employee.id}">${employee.name}</span>
-                                        <span class="employee-hours ${typeClass}">${displayText}</span>
+                                        <span class="${hoursClass}">${displayText}</span>
                                     </div>
                                 `;
                             }
