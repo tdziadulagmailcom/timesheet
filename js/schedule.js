@@ -95,6 +95,10 @@ function updateScheduleUI() {
             // Wyłącz wszystkie pola formularza
             document.querySelectorAll('.start-time, .end-time, .type-select, .custom-category-text, .custom-category-value').forEach(input => {
                 input.disabled = true;
+                // Usuwamy klasy wpływające na wygląd (jeśli takie istnieją)
+                input.style.opacity = "1";
+                input.style.backgroundColor = "";
+                input.style.color = "";
             });
 
             // Wyłącz niestandardowe selektory czasu
