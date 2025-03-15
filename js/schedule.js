@@ -103,14 +103,20 @@ function updateScheduleUI() {
                 select.querySelectorAll('select').forEach(s => s.disabled = true);
             });
 
-            // Pokaż wskaźnik blokady
+            // Pokaż lub ukryj wskaźnik blokady w zależności od stanu blokady
             const lockIndicator = document.getElementById('schedule-lock-indicator');
             if (lockIndicator) {
-                lockIndicator.classList.remove('hidden');
-                lockIndicator.textContent = appState.settings.language === 'pl' ?
-                    '🔒 Zablokowany' :
-                    '🔒 Locked';
+                if (locked) {
+                    lockIndicator.classList.remove('hidden');
+                    lockIndicator.textContent = appState.settings.language === 'pl' ?
+                        'Harmonogram zablokowany (używane są zapisane stawki)' :
+                        'Schedule locked (saved rates are used)';
+                } else {
+                    lockIndicator.classList.add('hidden');
+                }
             }
+
+
         } else {
             // Odblokowuj pola formularza
             document.querySelectorAll('.start-time, .end-time, .type-select, .custom-category-text, .custom-category-value').forEach(input => {
@@ -154,9 +160,11 @@ function isScheduleLocked() {
     const weekStart = formatDate(appState.currentWeekStart);
     const weekKey = `${appState.currentEmployeeId}_week_${weekStart}`;
     const weekData = appState.schedule[weekKey];
-    
+
+    // Jawnie sprawdź, czy flaga locked jest dokładnie równa true
     return weekData && weekData.locked === true;
 }
+
 // Initialize schedule time inputs event listeners
 function initScheduleInputs() {
     console.log('Initializing time fields...');
