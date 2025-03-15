@@ -110,7 +110,26 @@ function updateScheduleUI() {
                     '🔒 Zablokowany' : 
                     '🔒 Locked';
             }
-        }       
+        }   
+        
+        else {
+            // Odblokowuj pola formularza
+            document.querySelectorAll('.start-time, .end-time, .type-select, .custom-category-text, .custom-category-value').forEach(input => {
+                input.disabled = false;
+            });
+        
+            // Włącz niestandardowe selektory czasu
+            document.querySelectorAll('.custom-time-select').forEach(select => {
+                select.classList.remove('disabled');
+                select.querySelectorAll('select').forEach(s => s.disabled = false);
+            });
+        
+            // Ukryj wskaźnik blokady
+            const lockIndicator = document.getElementById('schedule-lock-indicator');
+            if (lockIndicator) {
+                lockIndicator.classList.add('hidden');
+            }
+        }
 
         // Update summary
         updateWeekSummary();
@@ -400,23 +419,8 @@ function updateWeekSummary() {
         if (weekData && weekData.locked) {
             rate = weekData.savedRate || rate;
             payroll = weekData.savedPayroll || payroll;
-            
-            // Aktualizuj UI, aby pokazać, że harmonogram jest zablokowany
-            const lockIndicator = document.getElementById('schedule-lock-indicator');
-            if (lockIndicator) {
-                lockIndicator.classList.remove('hidden');
-                lockIndicator.textContent = appState.settings.language === 'pl' ? 
-                    'Harmonogram zablokowany (używane są zapisane stawki)' : 
-                    'Schedule locked (saved rates are used)';
-            }
-        } else {
-            // Schowaj wskaźnik blokady
-            const lockIndicator = document.getElementById('schedule-lock-indicator');
-            if (lockIndicator) {
-                lockIndicator.classList.add('hidden');
-            }
         }
-        
+
         // Przeszukaj harmonogram dla bieżącego tygodnia
         for (let i = 0; i < 7; i++) {
             const date = getDateForDay(i);
@@ -905,9 +909,27 @@ function updateTypeForDay(event) {
         
         // Zapisz zmiany do localStorage
         saveAppData();
-        
+
         // Aktualizuj podsumowanie
         updateWeekSummary();
+
+        // Dodaj wymuszenie natychmiastowej aktualizacji interfejsu
+        const holidayDays = countDaysWithType('Holiday');
+        const bankHolidayDays = countDaysWithType('Bank Holiday');
+        document.getElementById('holiday-days').textContent = holidayDays;
+        document.getElementById('bank-holiday-days').textContent = bankHolidayDays;
+
+        // Oblicz i zaktualizuj wartości
+        const employee = appState.employees.find(emp => emp.id === Number(appState.currentEmployeeId));
+        if (employee) {
+            const rate = employee.rate;
+            const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
+            const holidayValue = holidayDays * baseHours * rate;
+            const bankHolidayValue = bankHolidayDays * baseHours * rate;
+
+            document.getElementById('holiday-value').textContent = formatCurrency(holidayValue);
+            document.getElementById('bank-holiday-value').textContent = formatCurrency(bankHolidayValue);
+        }
         
     } catch (error) {
         console.error('Error updating type for day:', error);
