@@ -411,7 +411,6 @@ function initCustomCategoryFields() {
     });
 }
 
-// Save schedule data
 function saveSchedule() {
     // For each day of the week, save start and end times
     for (let i = 0; i < 7; i++) {
@@ -427,10 +426,10 @@ function saveSchedule() {
         const selectedType = typeSelect ? typeSelect.value : '';
         
         // Only save if both start and end times are set or if a type is selected
-        if ((startInput.value && endInput.value) || selectedType) {
+        if ((startInput && startInput.value && endInput && endInput.value) || selectedType) {
             appState.schedule[scheduleKey] = {
-                start: startInput.value || '',
-                end: endInput.value || '',
+                start: startInput && startInput.value ? startInput.value : '',
+                end: endInput && endInput.value ? endInput.value : '',
                 type: selectedType
             };
         } else if (appState.schedule[scheduleKey]) {
@@ -439,11 +438,16 @@ function saveSchedule() {
         }
     }
     
-    // Print the schedule for debugging
-    console.log('Current schedule after save:', appState.schedule);
-    
     // Save to localStorage
     saveAppData();
+    
+    // Aktualizuj średnią godzin dla wszystkich pracowników
+    appState.employees.forEach(employee => {
+        employee.avgHoursPerWeek = calculateAvgHoursPerWeek(employee.id);
+    });
+    
+    // Odświeżanie listy pracowników
+    renderEmployeesList();
     
     // Update calendar
     updateCalendarUI();
@@ -451,18 +455,7 @@ function saveSchedule() {
     // Show confirmation
     const language = appState.settings.language;
     alert(translations[language]['schedule-saved']);
-
-    // Aktualizuj średnią godzin dla bieżącego pracownika
-    const currentEmployee = appState.employees.find(emp => emp.id === Number(appState.currentEmployeeId));
-    if (currentEmployee) {
-        currentEmployee.avgHoursPerWeek = calculateAvgHoursPerWeek(currentEmployee.id);
-        // Odświeżanie listy pracowników, jeśli zakładka jest widoczna
-        if (document.getElementById('employees').classList.contains('active')) {
-            renderEmployeesList();
-        }
-    }
 }
-
 // Export week schedule to Excel
 function exportWeekToExcel() {
     // Create workbook and worksheet
@@ -605,7 +598,6 @@ function navigateToNextWeek() {
     updateScheduleUI();
 }
 
-// Modyfikacja funkcji updateTypeForDay
 function updateTypeForDay(event) {
     console.log('Updating type for day...');
     
@@ -624,25 +616,74 @@ function updateTypeForDay(event) {
                 row.classList.add('bank-holiday');
             }
             
-            // Zaktualizuj pola start i end oraz wyświetlane godziny po zmianie typu
+            // Znajdź pola czasowe i komórkę godzin
             const hoursCell = row.querySelector(`.hours-cell`);
             const startInput = row.querySelector(`.start-time`);
             const endInput = row.querySelector(`.end-time`);
             
+            // Znajdź selektory niestandardowe
+            const startTimeSelect = row.querySelector('.custom-time-select[data-type="start"]');
+            const endTimeSelect = row.querySelector('.custom-time-select[data-type="end"]');
+            
             if (hoursCell) {
                 if (selectedType === 'Holiday' || selectedType === 'Bank Holiday') {
                     // Wyzeruj pola start i end
-                    if (startInput) startInput.value = '';
-                    if (endInput) endInput.value = '';
+                    if (startInput) startInput.value = '00:00';
+                    if (endInput) endInput.value = '00:00';
                     
-                    // Wyświetl "- -" zamiast godzin
-                    hoursCell.textContent = "- -";
-                } else if (startInput && endInput && startInput.value && endInput.value) {
-                    // Standardowe obliczanie godzin
-                    const hours = calculateHours(startInput.value, endInput.value);
-                    hoursCell.textContent = formatHoursForDisplay(hours);
+                    // Zaktualizuj selektory niestandardowe
+                    if (startTimeSelect) {
+                        const hourSelect = startTimeSelect.querySelector('.hour-select');
+                        const minuteSelect = startTimeSelect.querySelector('.minute-select');
+                        if (hourSelect) hourSelect.value = '00';
+                        if (minuteSelect) minuteSelect.value = '00';
+                    }
+                    
+                    if (endTimeSelect) {
+                        const hourSelect = endTimeSelect.querySelector('.hour-select');
+                        const minuteSelect = endTimeSelect.querySelector('.minute-select');
+                        if (hourSelect) hourSelect.value = '00';
+                        if (minuteSelect) minuteSelect.value = '00';
+                    }
+                    
+                    // Oblicz godziny bazowe dla pracownika na dzień
+                    const baseHours = getBaseHoursForEmployee(appState.currentEmployeeId, true);
+                    const hours = Math.floor(baseHours);
+                    const minutes = Math.round((baseHours - hours) * 60);
+                    
+                    if (minutes === 0) {
+                        hoursCell.textContent = `${hours} hr`;
+                    } else {
+                        hoursCell.textContent = `${hours} hr ${minutes} min`;
+                    }
                 } else {
-                    hoursCell.textContent = '';
+                    // Jeśli zmiana z Holiday/Bank Holiday na inny typ
+                    if ((!startInput.value || startInput.value === '00:00') && 
+                        (!endInput.value || endInput.value === '00:00')) {
+                        // Wyczyść pola, jeśli były ustawione na 00:00
+                        startInput.value = '';
+                        endInput.value = '';
+                        hoursCell.textContent = '';
+                        
+                        // Zaktualizuj selektory niestandardowe
+                        if (startTimeSelect) {
+                            const hourSelect = startTimeSelect.querySelector('.hour-select');
+                            const minuteSelect = startTimeSelect.querySelector('.minute-select');
+                            if (hourSelect) hourSelect.selectedIndex = 0;
+                            if (minuteSelect) minuteSelect.selectedIndex = 0;
+                        }
+                        
+                        if (endTimeSelect) {
+                            const hourSelect = endTimeSelect.querySelector('.hour-select');
+                            const minuteSelect = endTimeSelect.querySelector('.minute-select');
+                            if (hourSelect) hourSelect.selectedIndex = 0;
+                            if (minuteSelect) minuteSelect.selectedIndex = 0;
+                        }
+                    } else if (startInput.value && endInput.value) {
+                        // Standardowe obliczanie godzin
+                        const hours = calculateHours(startInput.value, endInput.value);
+                        hoursCell.textContent = formatHoursForDisplay(hours);
+                    }
                 }
                 
                 // Aktualizuj podsumowanie
@@ -653,7 +694,6 @@ function updateTypeForDay(event) {
         console.error('Error updating type for day:', error);
     }
 }
-
 // Update hours display for a specific day when time inputs change
 function updateHoursForDay(event) {
     console.log('Updating hours for day...');

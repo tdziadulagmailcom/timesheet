@@ -151,28 +151,19 @@ function addEmployee() {
     
     console.log('New employee ID:', newId);
     
-    // W funkcji addEmployee() dodaj:
+    // Dla nowego pracownika ustawiamy 0
+    const avgHoursPerWeek = 0;
+    
+    // Add employee to the array
     appState.employees.push({
         id: newId,
         name: name,
         rate: rate,
         payroll: payroll,
         avgHoursPerWeek: avgHoursPerWeek,
-        targetHoursPerWeek: 0, // Domyślna wartość
-        targetHoursPerDay: 0 // Domyślna wartość dla średniej dziennej
+        targetHoursPerWeek: 0,
+        targetHoursPerDay: 0
     });
-
-   // Oblicz średnią godzin
-   const avgHoursPerWeek = 0; // Dla nowego pracownika ustawiamy 0
-    
-   // Add employee to the array
-   appState.employees.push({
-       id: newId,
-       name: name,
-       rate: rate,
-       payroll: payroll,
-       avgHoursPerWeek: avgHoursPerWeek
-   });
     
     console.log('Employee added:', { id: newId, name: name, rate: rate });
     
