@@ -343,21 +343,73 @@ function savePaymentStatuses() {
 }
 
 // Przełącz status płatności
+// Toggle payment status and lock/unlock schedule
 function togglePaymentStatus(paymentId) {
-    paymentsState.paidStatuses[paymentId] = !paymentsState.paidStatuses[paymentId];
+    // Get the payment from array
+    const payment = paymentsState.payments.find(p => p.id === paymentId);
+    if (!payment) return;
+
+    // Toggle paid status
+    const newPaidStatus = !paymentsState.paidStatuses[paymentId];
+    paymentsState.paidStatuses[paymentId] = newPaidStatus;
+
+    // Lock or unlock the associated schedule
+    lockUnlockScheduleForPayment(payment, newPaidStatus);
+
+    // Save the payment status
     savePaymentStatuses();
+
+    // Update UI
     renderPaymentsList();
     updateUnpaidTotal();
+
+    // If the payment is for the currently displayed employee and week, update schedule UI
+    const currentEmployeeId = appState.currentEmployeeId;
+    const currentWeekStart = formatDate(appState.currentWeekStart);
+
+    if (payment.employeeId === currentEmployeeId && payment.weekStart === currentWeekStart) {
+        updateScheduleUI();
+    }
+}
+
+// New function to lock/unlock schedule based on payment status
+function lockUnlockScheduleForPayment(payment, isPaid) {
+    if (!payment || !payment.employeeId || !payment.weekStart) return;
+
+    // Format for the week key
+    const weekKey = `${payment.employeeId}_week_${payment.weekStart}`;
+
+    // Lock/unlock the week
+    if (appState.schedule[weekKey]) {
+        appState.schedule[weekKey].locked = isPaid;
+    }
+
+    // Loop through days of the week to lock/unlock each day
+    const startDate = new Date(payment.weekStart);
+    for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
+        const dateString = formatDate(currentDate);
+        const scheduleKey = `${payment.employeeId}_${dateString}`;
+
+        if (appState.schedule[scheduleKey]) {
+            appState.schedule[scheduleKey].locked = isPaid;
+        }
+    }
+
+    // Save changes to appState
+    saveAppData();
 }
 
 // Wyświetl listę płatności
+// Render the payments list with improved UI
 function renderPaymentsList() {
     const listContainer = document.getElementById('payments-list');
     listContainer.innerHTML = '';
-    
+
     const language = appState.settings.language;
-    
-    // Nagłówek listy
+
+    // Header row
     const headerRow = document.createElement('div');
     headerRow.className = 'payment-header-row';
     headerRow.innerHTML = `
@@ -367,19 +419,19 @@ function renderPaymentsList() {
         <div class="payment-col status-col">${language === 'pl' ? 'Status' : 'Status'}</div>
     `;
     listContainer.appendChild(headerRow);
-    
-    // Sortuj płatności według pracownika i daty
+
+    // Sort payments by employee and date
     const sortedPayments = [...paymentsState.payments].sort((a, b) => {
         if (a.employeeName !== b.employeeName) {
             return a.employeeName.localeCompare(b.employeeName);
         }
         return a.weekStart.localeCompare(b.weekStart);
     });
-    
-    // Twórz wiersze dla każdej płatności
+
+    // Create rows for each payment
     sortedPayments.forEach(payment => {
         const isPaid = paymentsState.paidStatuses[payment.id] || false;
-        
+
         const row = document.createElement('div');
         row.className = `payment-row ${isPaid ? 'paid' : ''}`;
         row.innerHTML = `
@@ -389,22 +441,22 @@ function renderPaymentsList() {
             <div class="payment-col status-col">
                 <label class="payment-status-label">
                     <input type="checkbox" class="payment-status-checkbox" data-payment-id="${payment.id}" ${isPaid ? 'checked' : ''}>
-                    <span class="payment-status-text">${isPaid ? (language === 'pl' ? 'Zapłacone' : 'Paid') : (language === 'pl' ? 'Niezapłacone' : 'Unpaid')}</span>
+                    <span class="payment-status-text ${isPaid ? 'payment-status-paid' : 'payment-status-unpaid'}">${isPaid ? (language === 'pl' ? 'Zapłacone' : 'Paid') : (language === 'pl' ? 'Niezapłacone' : 'Unpaid')}</span>
                 </label>
             </div>
         `;
         listContainer.appendChild(row);
     });
-    
-    // Dodaj obsługę zdarzeń dla checkboxów
+
+    // Add event listeners for checkboxes
     document.querySelectorAll('.payment-status-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
+        checkbox.addEventListener('change', function () {
             const paymentId = this.getAttribute('data-payment-id');
             togglePaymentStatus(paymentId);
         });
     });
-    
-    // Jeśli nie ma płatności, pokaż informację
+
+    // Show message if no payments
     if (sortedPayments.length === 0) {
         const emptyMessage = document.createElement('div');
         emptyMessage.className = 'payments-empty-message';
@@ -448,5 +500,68 @@ function updatePaymentsTranslations() {
     const calculateButton = document.getElementById('calculate-payments');
     if (calculateButton) {
         calculateButton.textContent = language === 'pl' ? 'Oblicz płatności' : 'Calculate payments';
+    }
+}
+
+// Load saved payment statuses
+async function loadPaymentStatuses() {
+    try {
+        if (databaseInterface.useDatabase()) {
+            try {
+                paymentsState.paidStatuses = await databaseInterface.payments.getStatuses();
+            } catch (dbError) {
+                console.error('Error loading payment statuses from database:', dbError);
+                // Fall back to localStorage
+                loadPaymentStatusesFromLocalStorage();
+            }
+        } else {
+            // Use localStorage
+            loadPaymentStatusesFromLocalStorage();
+        }
+    } catch (error) {
+        console.error('Error loading payment statuses:', error);
+        paymentsState.paidStatuses = {};
+    }
+}
+
+// Helper to load from localStorage
+function loadPaymentStatusesFromLocalStorage() {
+    try {
+        const savedStatuses = localStorage.getItem('harmonogramApp_paidStatuses');
+        if (savedStatuses) {
+            paymentsState.paidStatuses = JSON.parse(savedStatuses);
+        }
+    } catch (error) {
+        console.error('Error parsing payment statuses from localStorage:', error);
+        paymentsState.paidStatuses = {};
+    }
+}
+
+// Save payment statuses
+async function savePaymentStatuses() {
+    try {
+        if (databaseInterface.useDatabase()) {
+            try {
+                await databaseInterface.payments.saveStatuses(paymentsState.paidStatuses);
+            } catch (dbError) {
+                console.error('Error saving payment statuses to database:', dbError);
+                // Fall back to localStorage
+                savePaymentStatusesToLocalStorage();
+            }
+        } else {
+            // Use localStorage
+            savePaymentStatusesToLocalStorage();
+        }
+    } catch (error) {
+        console.error('Error saving payment statuses:', error);
+    }
+}
+
+// Helper to save to localStorage
+function savePaymentStatusesToLocalStorage() {
+    try {
+        localStorage.setItem('harmonogramApp_paidStatuses', JSON.stringify(paymentsState.paidStatuses));
+    } catch (error) {
+        console.error('Error saving payment statuses to localStorage:', error);
     }
 }

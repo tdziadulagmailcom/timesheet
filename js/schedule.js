@@ -1,16 +1,17 @@
 // Schedule-related functions
 
 // Update the schedule UI based on current state
+
 function updateScheduleUI() {
     console.log('Updating schedule UI...');
     try {
-        // Ładowanie zapisanych kategorii dla bieżącego tygodnia
+        // Load saved categories for the current week
         const weekStart = formatDate(appState.currentWeekStart);
         const weekKey = `${appState.currentEmployeeId}_week_${weekStart}`;
         const weekData = appState.schedule[weekKey];
 
         if (weekData) {
-            // Ustawienie zapisanych wartości w formularzach
+            // Set saved values in forms
             if (weekData.category1) {
                 document.getElementById('custom-category-1').value = weekData.category1.name || '';
                 document.getElementById('custom-category-value-1').value = weekData.category1.value || 0;
@@ -21,19 +22,23 @@ function updateScheduleUI() {
                 document.getElementById('custom-category-value-2').value = weekData.category2.value || 0;
             }
         } else {
-            // Wyzeruj pola jeśli nie ma zapisanych danych
+            // Reset fields if no saved data
             document.getElementById('custom-category-1').value = '';
             document.getElementById('custom-category-value-1').value = 0;
             document.getElementById('custom-category-2').value = '';
             document.getElementById('custom-category-value-2').value = 0;
         }
-    } catch (error) {
-        console.error('Błąd ładowania dodatkowych kategorii:', error);
-    }
 
-    try {
         // Update week display
-        document.getElementById('current-week-display').textContent = formatWeekRange();
+        const weekDisplayElem = document.getElementById('current-week-display');
+        weekDisplayElem.textContent = formatWeekRange();
+
+        // Apply saved-week class if this week has been saved
+        if (weekData) {
+            weekDisplayElem.classList.add('saved-week');
+        } else {
+            weekDisplayElem.classList.remove('saved-week');
+        }
 
         // Get schedule table body
         const tableBody = document.getElementById('schedule-table-body');
@@ -59,6 +64,11 @@ function updateScheduleUI() {
                 row.classList.add('bank-holiday');
             }
 
+            // Check if the row should be locked (based on payment status)
+            if (daySchedule.locked) {
+                row.classList.add('locked-row');
+            }
+
             // Calculate hours in new format (X hr)
             const hoursValue = calculateHours(daySchedule.start, daySchedule.end);
             const formattedHours = hoursValue ? formatHoursForDisplay(hoursValue) : '';
@@ -67,7 +77,7 @@ function updateScheduleUI() {
                 <td>${days[i]}${isBankHol ? `<br><span class="bank-holiday-label">${translations[language]['bank-holiday']}</span>` : ''}</td>
                 <td>${formatDateForDisplay(date)}</td>
                 <td>
-                    <select class="type-select" data-day="${i}">
+                    <select class="type-select" data-day="${i}" ${daySchedule.locked ? 'disabled' : ''}>
                         <option value="" ${!daySchedule.type ? 'selected' : ''}></option>
                         <option value="Holiday" ${daySchedule.type === 'Holiday' ? 'selected' : ''}>Holiday</option>
                         <option value="Bank Holiday" ${daySchedule.type === 'Bank Holiday' ? 'selected' : ''}>Bank Holiday</option>
@@ -76,8 +86,8 @@ function updateScheduleUI() {
                         <option value="Home" ${daySchedule.type === 'Home' ? 'selected' : ''}>Home</option>
                     </select>
                 </td>
-                <td><input type="time" class="start-time" data-day="${i}" value="${daySchedule.start}" step="900"></td>
-                <td><input type="time" class="end-time" data-day="${i}" value="${daySchedule.end}" step="900"></td>
+                <td><input type="time" class="start-time" data-day="${i}" value="${daySchedule.start}" step="900" ${daySchedule.locked ? 'disabled' : ''}></td>
+                <td><input type="time" class="end-time" data-day="${i}" value="${daySchedule.end}" step="900" ${daySchedule.locked ? 'disabled' : ''}></td>
                 <td class="hours-cell" data-day="${i}">${formattedHours}</td>
             `;
 
@@ -87,46 +97,50 @@ function updateScheduleUI() {
         // Add event listeners to time inputs
         initScheduleInputs();
 
-        // Sprawdź, czy harmonogram jest zablokowany
+        // Check if the schedule is locked based on payment status
         const locked = isScheduleLocked();
-        console.log('Status blokady harmonogramu:', locked);
+        console.log('Schedule lock status:', locked);
 
         if (locked) {
-            // Wyłącz wszystkie pola formularza
+            // Disable all form fields
             document.querySelectorAll('.start-time, .end-time, .type-select, .custom-category-text, .custom-category-value').forEach(input => {
                 input.disabled = true;
-                // Usuwamy klasy wpływające na wygląd (jeśli takie istnieją)
-                input.style.opacity = "1";
-                input.style.backgroundColor = "";
-                input.style.color = "";
             });
 
-            // Wyłącz niestandardowe selektory czasu
+            // Disable custom time selectors
             document.querySelectorAll('.custom-time-select').forEach(select => {
                 select.classList.add('disabled');
                 select.querySelectorAll('select').forEach(s => s.disabled = true);
             });
 
+            // Show unlock button
+            const unlockButton = document.getElementById('unlock-schedule');
+            if (unlockButton) {
+                unlockButton.classList.remove('hidden');
+            }
         } else {
-            // Odblokowuj pola formularza
-            document.querySelectorAll('.start-time, .end-time, .type-select, .custom-category-text, .custom-category-value').forEach(input => {
+            // Enable form fields that aren't individually locked
+            document.querySelectorAll('.start-time:not([disabled]), .end-time:not([disabled]), .type-select:not([disabled]), .custom-category-text, .custom-category-value').forEach(input => {
                 input.disabled = false;
             });
 
-            // Włącz niestandardowe selektory czasu
+            // Enable custom time selectors for unlocked rows
             document.querySelectorAll('.custom-time-select').forEach(select => {
-                select.classList.remove('disabled');
-                select.querySelectorAll('select').forEach(s => s.disabled = false);
+                const dayIndex = select.getAttribute('data-day');
+                const date = getDateForDay(dayIndex);
+                const dateString = formatDate(date);
+                const scheduleKey = `${appState.currentEmployeeId}_${dateString}`;
+                const daySchedule = appState.schedule[scheduleKey] || {};
+
+                if (!daySchedule.locked) {
+                    select.classList.remove('disabled');
+                    select.querySelectorAll('select').forEach(s => s.disabled = false);
+                }
             });
 
-        }
-
-        // Pokaż lub ukryj przycisk "Odblokuj harmonogram" w zależności od stanu blokady
-        const unlockButton = document.getElementById('unlock-schedule');
-        if (unlockButton) {
-            if (locked) {
-                unlockButton.classList.remove('hidden');
-            } else {
+            // Hide unlock button
+            const unlockButton = document.getElementById('unlock-schedule');
+            if (unlockButton) {
                 unlockButton.classList.add('hidden');
             }
         }
@@ -597,46 +611,52 @@ function saveSchedule() {
         const startInput = document.querySelector(`.start-time[data-day="${i}"]`);
         const endInput = document.querySelector(`.end-time[data-day="${i}"]`);
         const typeSelect = document.querySelector(`.type-select[data-day="${i}"]`);
-        
+
         const scheduleKey = `${appState.currentEmployeeId}_${dateString}`;
-        
+
         // Get the selected type value
         const selectedType = typeSelect ? typeSelect.value : '';
-        
+
         // Only save if both start and end times are set or if a type is selected
         if ((startInput && startInput.value && endInput && endInput.value) || selectedType) {
-            // Znajdź bieżące dane pracownika
+            // Find current employee data
             const employee = appState.employees.find(emp => emp.id === Number(appState.currentEmployeeId));
-            
+
+            // Don't change locked status if it's already set
+            const currentLocked = appState.schedule[scheduleKey] && appState.schedule[scheduleKey].locked;
+
             appState.schedule[scheduleKey] = {
                 start: startInput && startInput.value ? startInput.value : '',
                 end: endInput && endInput.value ? endInput.value : '',
                 type: selectedType,
-                // Zapisz stawkę i payroll z momentu utworzenia harmonogramu
+                // Save rate and payroll from the time of creating the schedule
                 savedRate: employee ? employee.rate : 0,
                 savedPayroll: employee ? (employee.payroll || 0) : 0,
-                locked: true // Domyślnie zablokowany po zapisaniu
+                locked: currentLocked || false // Keep locked status if already set, otherwise false
             };
         } else if (appState.schedule[scheduleKey]) {
             // Remove entry if times are cleared and no type is selected
             delete appState.schedule[scheduleKey];
         }
     }
-    
-    // Zapisz dodatkowe kategorie dla bieżącego tygodnia
+
+    // Save additional categories for the current week
     const category1Name = document.getElementById('custom-category-1').value.trim();
     const category1Value = parseFloat(document.getElementById('custom-category-value-1').value) || 0;
     const category2Name = document.getElementById('custom-category-2').value.trim();
     const category2Value = parseFloat(document.getElementById('custom-category-value-2').value) || 0;
-    
-    // Utwórz klucz dla bieżącego tygodnia i pracownika
+
+    // Create key for current week and employee
     const weekStart = formatDate(appState.currentWeekStart);
     const weekKey = `${appState.currentEmployeeId}_week_${weekStart}`;
-    
-    // Znajdź bieżące dane pracownika
+
+    // Find current employee data
     const employee = appState.employees.find(emp => emp.id === Number(appState.currentEmployeeId));
-    
-    // Zapisz kategorie w appState wraz ze stawką i payroll
+
+    // Don't change locked status if it's already set
+    const currentLocked = appState.schedule[weekKey] && appState.schedule[weekKey].locked;
+
+    // Save categories in appState with rate and payroll
     appState.schedule[weekKey] = {
         category1: {
             name: category1Name,
@@ -648,43 +668,42 @@ function saveSchedule() {
         },
         savedRate: employee ? employee.rate : 0,
         savedPayroll: employee ? (employee.payroll || 0) : 0,
-        locked: true // Domyślnie zablokowany po zapisaniu
+        locked: currentLocked || false // Keep locked status if already set, otherwise false
     };
-    
-    // Save to localStorage
+
+    // Save to database/localStorage
     saveAppData();
-    
-    // Aktualizuj średnią godzin dla wszystkich pracowników
+
+    // Update average hours for all employees
     appState.employees.forEach(employee => {
         employee.avgHoursPerWeek = calculateAvgHoursPerWeek(employee.id);
     });
-    
-    // Odświeżanie listy pracowników
+
+    // Refresh employee list
     renderEmployeesList();
-    
+
     // Update calendar
     updateCalendarUI();
-    
-    // Zamiast bezpośrednio manipulować wskaźnikiem, zaktualizuj cały UI
+
+    // Highlight the week display (instead of locking inputs)
+    highlightWeekDisplay();
+
+    // Update UI
     updateScheduleUI();
-
-    // Wyłącz pola formularza
-    document.querySelectorAll('.start-time, .end-time, .type-select, .custom-category-text, .custom-category-value').forEach(input => {
-        input.disabled = true;
-    });
-
-    // Wyłącz niestandardowe selektory czasu
-    document.querySelectorAll('.custom-time-select').forEach(select => {
-        select.classList.add('disabled');
-        select.querySelectorAll('select').forEach(s => s.disabled = true);
-    });
 
     // Show confirmation
     const language = appState.settings.language;
     alert(translations[language]['schedule-saved']);
-
-    
 }
+
+// New function to highlight the week display
+function highlightWeekDisplay() {
+    const weekDisplay = document.getElementById('current-week-display');
+    if (weekDisplay) {
+        weekDisplay.classList.add('saved-week');
+    }
+}
+
 
 // Export week schedule to Excel
 function exportWeekToExcel() {
