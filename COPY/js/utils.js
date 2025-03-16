@@ -81,20 +81,24 @@ function convertToDecimalHours(timeStr) {
     return hours + (minutes / 60);
 }
 
-// Format decimal hours to "X hr" format
+// Format decimal hours for calendar display
 function formatHoursForCalendar(timeStr) {
     if (!timeStr) return '';
     
     try {
         const [hours, minutes] = timeStr.split(':').map(Number);
-        // Round to full hours or show with one decimal place
-        if (minutes === 0) {
-            return `${hours} hr`;
+        // Ukryj jeśli suma godzin jest równa 0
+        if (hours === 0 && minutes === 0) {
+            return '';
         }
-        return `${hours + (minutes / 60).toFixed(1)} hr`;
+        // Wyświetl tylko liczbę bez oznaczenia "hr"
+        if (minutes === 0) {
+            return `${hours}`;
+        }
+        return `${(hours + minutes / 60).toFixed(1)}`;
     } catch (error) {
         console.error('Error formatting hours for calendar:', error);
-        return '0 hr';
+        return '';
     }
 }
 

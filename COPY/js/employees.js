@@ -1,25 +1,48 @@
-// Employees-related functions
-
-// Render employees list
 function renderEmployeesList() {
     const employeesList = document.getElementById('employees-list');
     employeesList.innerHTML = '';
     
     const language = appState.settings.language;
+    const currentYear = new Date().getFullYear();
     
     appState.employees.forEach(employee => {
         const item = document.createElement('div');
         item.className = 'employee-item';
         
-        // Dodaj informację o payroll
+        // Przygotuj obiekt holidayDaysByYear jeśli nie istnieje
+        if (!employee.holidayDaysByYear) {
+            employee.holidayDaysByYear = {};
+        }
+        
+        // Pobierz wartość dla bieżącego roku lub wartość domyślną
+        const holidayDaysForCurrentYear = employee.holidayDaysByYear[currentYear] || 
+                                         employee.holidayDaysPerYear || 
+                                         appState.settings.defaultHolidayDays || 
+                                         26;
+        
+        // Dodaj informację o payroll i średniej godzin
         const payrollText = language === 'pl' ? 'Payroll' : 'Payroll';
+        const avgHoursText = language === 'pl' ? 'Średnia godzin/tydzień' : 'Average hours/week';
+        const avgDailyText = language === 'pl' ? 'Średnia godzin/dzień' : 'Average hours/day';
+        const overrideText = 'Override';
+        const holidayDaysText = language === 'pl' ? 'Dni urlopowe' : 'Holiday days';
+        const yearText = language === 'pl' ? 'Rok' : 'Year';
         const payrollValue = employee.payroll ? formatCurrency(employee.payroll) : formatCurrency(0);
+        const avgHours = employee.avgHoursPerWeek ? employee.avgHoursPerWeek.toFixed(1) : '0.0';
+        const avgDailyHours = employee.avgHoursPerWeek ? (employee.avgHoursPerWeek / 5).toFixed(1) : '0.0';
+        const targetHours = employee.targetHoursPerWeek || 0;
+        const targetDailyHours = employee.targetHoursPerDay || 0;
         
         item.innerHTML = `
             <div>
                 <strong>${employee.name}</strong><br>
                 ${language === 'pl' ? 'Stawka' : 'Rate'}: ${formatCurrency(employee.rate)}/${language === 'pl' ? 'h' : 'hr'}<br>
-                ${payrollText}: ${payrollValue}
+                ${payrollText}: ${payrollValue}<br>
+                ${avgHoursText}: ${avgHours} 
+                <span style="margin-left: 20px;">${overrideText}: <input type="number" class="target-hours" data-id="${employee.id}" value="${targetHours}" min="0" max="168" step="0.5" style="width: 60px; padding: 2px 5px;"></span><br>
+                ${avgDailyText}: ${avgDailyHours} 
+                <span style="margin-left: 20px;">${overrideText}: <input type="number" class="target-daily-hours" data-id="${employee.id}" value="${targetDailyHours}" min="0" max="24" step="0.5" style="width: 60px; padding: 2px 5px;"></span>
+                <br>${holidayDaysText} (${yearText}: ${currentYear}): <input type="number" class="holiday-days" data-id="${employee.id}" data-year="${currentYear}" value="${holidayDaysForCurrentYear}" min="0" max="365" style="width: 60px; padding: 2px 5px;">
             </div>
             <div>
                 <button class="btn btn-secondary edit-employee" data-id="${employee.id}">${translations[language]['edit']}</button>
@@ -29,6 +52,114 @@ function renderEmployeesList() {
         
         employeesList.appendChild(item);
     });
+    
+    // Dodaj obsługę zdarzeń dla pól docelowej liczby godzin
+    document.querySelectorAll('.target-hours').forEach(input => {
+        input.addEventListener('change', updateTargetHours);
+    });
+    
+    // Dodaj obsługę zdarzeń dla pól docelowej dziennej liczby godzin
+    document.querySelectorAll('.target-daily-hours').forEach(input => {
+        input.addEventListener('change', updateTargetDailyHours);
+    });
+    
+    // Zaktualizuj obsługę zdarzeń dla pól dni urlopowych
+    document.querySelectorAll('.holiday-days').forEach(input => {
+        input.addEventListener('change', updateHolidayDays);
+    });
+}
+
+// Funkcja do aktualizacji docelowej dziennej liczby godzin
+function updateTargetDailyHours(event) {
+    const employeeId = Number(event.target.getAttribute('data-id'));
+    const targetDailyHours = parseFloat(event.target.value);
+    
+    // Znajdź pracownika i zaktualizuj wartość
+    const employee = appState.employees.find(emp => emp.id === employeeId);
+    if (employee) {
+        employee.targetHoursPerDay = targetDailyHours;
+        saveAppData();
+    }
+}
+
+// Funkcja do aktualizacji docelowej liczby godzin
+function updateTargetHours(event) {
+    const employeeId = Number(event.target.getAttribute('data-id'));
+    const targetHours = parseFloat(event.target.value);
+    
+    // Znajdź pracownika i zaktualizuj wartość
+    const employee = appState.employees.find(emp => emp.id === employeeId);
+    if (employee) {
+        employee.targetHoursPerWeek = targetHours;
+        saveAppData();
+    }
+}
+
+// Zaktualizuj funkcję updateHolidayDays
+function updateHolidayDays(event) {
+    const employeeId = Number(event.target.getAttribute('data-id'));
+    const year = Number(event.target.getAttribute('data-year'));
+    const holidayDays = parseInt(event.target.value);
+    
+    // Znajdź pracownika i zaktualizuj wartość
+    const employee = appState.employees.find(emp => emp.id === employeeId);
+    if (employee) {
+        // Upewnij się, że obiekt holidayDaysByYear istnieje
+        if (!employee.holidayDaysByYear) {
+            employee.holidayDaysByYear = {};
+        }
+        
+        // Zaktualizuj dni urlopowe dla konkretnego roku
+        employee.holidayDaysByYear[year] = holidayDays;
+        
+        // Zachowaj kompatybilność z istniejącym kodem
+        employee.holidayDaysPerYear = holidayDays;
+        
+        saveAppData();
+    }
+}
+
+// Obliczanie średniej godzin z ostatnich 13 tygodni
+function calculateAvgHoursPerWeek(employeeId) {
+    const today = new Date();
+    let totalHours = 0;
+    let weeksCount = 0;
+    
+    // Cofamy się o 13 tygodni (91 dni)
+    for (let i = 0; i < 13; i++) {
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - (7 * i) - today.getDay() + 1);
+        
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        
+        let weekHours = 0;
+        const currentDate = new Date(weekStart);
+        
+        // Liczymy godziny w każdym dniu tygodnia
+        while (currentDate <= weekEnd) {
+            const dateString = formatDate(currentDate);
+            const scheduleKey = `${employeeId}_${dateString}`;
+            const daySchedule = appState.schedule[scheduleKey];
+            
+            if (daySchedule && daySchedule.start && daySchedule.end) {
+                const hoursStr = calculateHours(daySchedule.start, daySchedule.end);
+                if (hoursStr) {
+                    const [hours, minutes] = hoursStr.split(':').map(Number);
+                    weekHours += hours + (minutes / 60);
+                }
+            }
+            
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        if (weekHours > 0) {
+            totalHours += weekHours;
+            weeksCount++;
+        }
+    }
+    
+    return weeksCount > 0 ? totalHours / weeksCount : 0;
 }
 
 // Add new employee
@@ -61,12 +192,18 @@ function addEmployee() {
     
     console.log('New employee ID:', newId);
     
+    // Dla nowego pracownika ustawiamy 0
+    const avgHoursPerWeek = 0;
+    
     // Add employee to the array
     appState.employees.push({
         id: newId,
         name: name,
         rate: rate,
-        payroll: payroll
+        payroll: payroll,
+        avgHoursPerWeek: avgHoursPerWeek,
+        targetHoursPerWeek: 0,
+        targetHoursPerDay: 0
     });
     
     console.log('Employee added:', { id: newId, name: name, rate: rate });
@@ -121,10 +258,19 @@ function editEmployee(event) {
         return;
     }
     
+    // Oblicz średnią godzin
+    const avgHoursPerWeek = calculateAvgHoursPerWeek(employeeId);
+    
+    // W funkcji editEmployee() dodaj:
+    // Zachowaj istniejącą wartość targetHoursPerWeek lub ustaw 0
+    employee.targetHoursPerWeek = employee.targetHoursPerWeek || 0;
+    employee.targetHoursPerDay = employee.targetHoursPerDay || 0;
+
     // Aktualizacja danych pracownika
     employee.name = newName.trim();
     employee.rate = parsedRate;
     employee.payroll = parsedPayroll;
+    employee.avgHoursPerWeek = avgHoursPerWeek;
     
     // Save to localStorage
     saveAppData();

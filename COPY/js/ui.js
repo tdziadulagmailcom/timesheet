@@ -29,6 +29,8 @@ function addEventListeners() {
         // Initialize schedule inputs
         initScheduleInputs();
         
+        safeBind('reset-week', 'click', resetWeek);
+
         // Employee selectors
         safeBind('employee-select', 'change', handleEmployeeChange);
         safeBind('calendar-employee-select', 'change', handleCalendarEmployeeChange);
@@ -45,6 +47,9 @@ function addEventListeners() {
         safeBind('add-employee', 'click', addEmployee);
         safeBind('save-settings', 'click', saveSettings);
         safeBind('add-bank-holiday', 'click', addBankHoliday);
+
+        // Dodaj obsługę przycisku odblokowywania harmonogramu
+        safeBind('unlock-schedule', 'click', unlockSchedule);
 
         // Currency selector
         safeBind('currency-select', 'change', function(e) {
@@ -121,6 +126,11 @@ function updateLanguage(language) {
         
         if (headerLangSelect) headerLangSelect.value = language;
         if (settingsLangSelect) settingsLangSelect.value = language;
+        // Update payments summary label if it exists
+        const paymentsTotalLabel = document.querySelector('.payments-total-container div:first-child');
+        if (paymentsTotalLabel) {
+            paymentsTotalLabel.textContent = language === 'pl' ? 'Suma niezapłaconych:' : 'Total unpaid:';
+        }
         
         // Update text for all elements with translation
         if (translations[language]) {
@@ -170,6 +180,9 @@ function updateLanguage(language) {
         if (typeof updateScheduleUI === 'function') updateScheduleUI();
         if (typeof updateCalendarUI === 'function') updateCalendarUI();
         
+        // Zaktualizuj tłumaczenia zakładki płatności
+        if (typeof updatePaymentsTranslations === 'function') updatePaymentsTranslations();
+
         // Save settings to localStorage
         if (typeof saveAppData === 'function') saveAppData();
         
@@ -188,6 +201,15 @@ function populateEmployeeSelectors() {
         const select = document.getElementById(selectorId);
         select.innerHTML = '';
         
+        // Dodaj pustą opcję tylko dla selektora kalendarza
+        if (selectorId === 'calendar-employee-select') {
+            const language = appState.settings.language || 'pl';
+            const emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = language === 'pl' ? '-- Brak podświetlenia --' : '-- No highlight --';
+            select.appendChild(emptyOption);
+        }
+        
         appState.employees.forEach(employee => {
             const option = document.createElement('option');
             option.value = employee.id;
@@ -195,7 +217,7 @@ function populateEmployeeSelectors() {
             select.appendChild(option);
         });
         
-        // Set current employee
-        select.value = appState.currentEmployeeId;
+        // Ustaw domyślną wartość
+        select.value = selectorId === 'calendar-employee-select' ? '' : appState.currentEmployeeId;
     });
 }

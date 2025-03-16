@@ -28,6 +28,7 @@
             <button class="tab" data-tab="employees" id="tab-employees">Pracownicy</button>
             <button class="tab" data-tab="settings" id="tab-settings">Ustawienia</button>
             <button class="tab" data-tab="calendar" id="tab-calendar">Kalendarz</button>
+            <button class="tab" data-tab="payments" id="tab-payments">Płatności</button>
         </div>
 
         <!-- Harmonogram tab -->
@@ -52,6 +53,7 @@
                             <tr>
                                 <th id="th-day">Dzień</th>
                                 <th id="th-date">Data</th>
+                                <th id="th-type">Typ</th>
                                 <th id="th-start">Początek</th>
                                 <th id="th-end">Koniec</th>
                                 <th id="th-hours">Godziny</th>
@@ -64,9 +66,11 @@
 
                     <div class="form-group">
                         <button id="save-schedule" class="btn" data-translate="save-schedule">Zapisz harmonogram</button>
+                        <button id="reset-week" class="btn btn-danger" data-translate="reset-week">Wyzeruj tydzień</button>
+                        <button id="unlock-schedule" class="btn btn-danger">Odblokuj harmonogram</button>
                         <button id="export-week" class="btn btn-secondary" data-translate="export-excel">Eksportuj do Excel</button>
                     </div>
-
+                    
                     <div class="summary-section">
                         <h3 id="summary-title">Podsumowanie tygodnia</h3>
                         <table class="summary-table">
@@ -89,11 +93,16 @@
                                     <td id="overtime-value">0.00 zł</td>
                                 </tr>
                                 <tr>
-                                    <td id="label-payroll">Payroll</td>
-                                    <td id="payroll-hours">-</td>
-                                    <td id="payroll-value">0.00 zł</td>
+                                    <td id="label-holiday-hours">Holiday</td>
+                                    <td id="holiday-days">0</td>
+                                    <td id="holiday-value">0.00 zł</td>
                                 </tr>
-                                <!-- New custom category rows with text inputs and value inputs that can be negative -->
+                                <tr>
+                                    <td id="label-bank-holiday-hours">Bank Holiday</td>
+                                    <td id="bank-holiday-days">0</td>
+                                    <td id="bank-holiday-value">0.00 zł</td>
+                                </tr>
+                                <!-- Custom category rows -->
                                 <tr class="custom-category">
                                     <td><input type="text" id="custom-category-1" class="custom-category-text" placeholder="Kategoria 1"></td>
                                     <td>-</td>
@@ -108,6 +117,16 @@
                                     <td id="label-total">Suma</td>
                                     <td id="total-hours">0</td>
                                     <td id="total-value">0.00 zł</td>
+                                </tr>
+                                <tr>
+                                    <td id="label-payroll">Payroll</td>
+                                    <td id="payroll-hours">-</td>
+                                    <td id="payroll-value">0.00 zł</td>
+                                </tr>
+                                <tr>
+                                    <td id="label-payment-due">Do wypłaty</td>
+                                    <td>-</td>
+                                    <td id="payment-due-value">0.00 zł</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -174,7 +193,17 @@
                     <label for="overtime-rate-multiplier" id="label-overtime-multiplier">Mnożnik stawki dla nadgodzin:</label>
                     <input type="number" id="overtime-rate-multiplier" min="1" step="0.1" value="1.5">
                 </div>
+
+                <div class="form-group">
+                    <label for="reset-password" id="label-reset-password">Hasło do resetowania:</label>
+                    <input type="password" id="reset-password" placeholder="********">
+                </div>
                 
+                <div class="form-group">
+                    <label for="default-holiday-days" id="label-default-holiday-days">Domyślna liczba dni urlopowych (rocznie):</label>
+                    <input type="number" id="default-holiday-days" min="0" value="26">
+                </div>
+
                 <div class="form-group">
                     <button id="save-settings" class="btn" data-translate="save-settings">Zapisz ustawienia</button>
                 </div>
@@ -217,21 +246,48 @@
                     </div>
 
                     <table class="calendar" id="month-calendar">
-                        <thead>
-                            <tr id="calendar-header">
-                                <th id="day-mon">Pon</th>
-                                <th id="day-tue">Wt</th>
-                                <th id="day-wed">Śr</th>
-                                <th id="day-thu">Czw</th>
-                                <th id="day-fri">Pt</th>
-                                <th id="day-sat">Sob</th>
-                                <th id="day-sun">Nie</th>
-                            </tr>
-                        </thead>
+                        
                         <tbody id="calendar-table-body">
                             <!-- Calendar cells will be populated by JavaScript -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+        <div id="payments" class="tab-content">
+            <div class="card">
+                <div class="payments-container">
+                    <div class="payments-header">
+                        <div class="employee-selector">
+                            <label for="payment-employee-select" id="label-payment-employee">Pracownik:</label>
+                            <select id="payment-employee-select">
+                                <option value="all">Wszyscy pracownicy</option>
+                                <!-- Opcje zostaną wypełnione przez JavaScript -->
+                            </select>
+                        </div>
+                        <div class="year-selector">
+                            <label for="payment-year-select" id="label-payment-year">Rok:</label>
+                            <select id="payment-year-select"></select>
+                        </div>
+                        <div class="date-range-selector">
+                            <label for="payment-start-date" id="label-payment-start-date">Od:</label>
+                            <input type="date" id="payment-start-date">
+                            <label for="payment-end-date" id="label-payment-end-date">Do:</label>
+                            <input type="date" id="payment-end-date">
+                        </div>
+                        <button id="calculate-payments" class="btn">Oblicz płatności</button>
+                    </div>
+                    
+                    <div class="payments-summary">
+                        <div class="payments-total-container">
+                            <div id="payments-total-label">Suma niezapłaconych:</div>
+                            <div id="payments-total-value">0.00 zł</div>
+                        </div>
+                    </div>
+
+                    <div id="payments-list" class="payments-list">
+                        <!-- Lista płatności będzie wypełniana przez JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -247,5 +303,6 @@
     <script src="js/calendar.js"></script>
     <script src="js/settings.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/payments.js"></script>
 </body>
 </html>

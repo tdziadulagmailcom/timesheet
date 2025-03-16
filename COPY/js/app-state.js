@@ -1,14 +1,15 @@
 // Application state management
 const appState = {
     employees: [
-        { id: 1, name: 'Jan Kowalski', rate: 25.00, payroll: 1000.00 },
-        { id: 2, name: 'Anna Nowak', rate: 27.50, payroll: 1200.00 }
+        { id: 1, name: 'Jan Kowalski', rate: 25.00, payroll: 1000.00, avgHoursPerWeek: 0 },
+        { id: 2, name: 'Anna Nowak', rate: 27.50, payroll: 1200.00, avgHoursPerWeek: 0 }
     ],
     settings: {
         regularHoursLimit: 40,
         overtimeRateMultiplier: 1.5,
         currency: 'PLN',
-        language: 'pl'
+        language: 'pl',
+        resetPassword: '' // Add th
     },
     bankHolidays: [
         { id: 1, name: 'Nowy Rok', date: '2025-01-01' },
@@ -52,6 +53,13 @@ function loadAppData() {
                 if (parsedData.bankHolidays) appState.bankHolidays = parsedData.bankHolidays;
                 if (parsedData.schedule) appState.schedule = parsedData.schedule;
                 
+                // Aktualizacja średnich godzin dla wszystkich pracowników
+                appState.employees.forEach(employee => {
+                    employee.avgHoursPerWeek = calculateAvgHoursPerWeek(employee.id);
+                    employee.targetHoursPerWeek = employee.targetHoursPerWeek || 0;
+                    employee.targetHoursPerDay = employee.targetHoursPerDay || 0;
+                });
+                
                 console.log('Data loaded successfully from localStorage');
             } catch (parseError) {
                 console.error('Error parsing data from localStorage:', parseError);
@@ -80,7 +88,15 @@ function loadAppData() {
         if (currencySelect) currencySelect.value = appState.settings.currency;
         if (languageSelect) languageSelect.value = appState.settings.language;
         if (headerLanguageSelect) headerLanguageSelect.value = appState.settings.language;
-    } catch (error) {
+        // Upewnij się że wartość domyślnych dni urlopowych jest ustawiona
+        if (!appState.settings.defaultHolidayDays) {
+            appState.settings.defaultHolidayDays = 26; // domyślnie 26 dni
+        }
+
+        // Upewnij się, że pole jest wypełnione w UI
+        const defaultHolidayDaysInput = document.getElementById('default-holiday-days');
+        if (defaultHolidayDaysInput) defaultHolidayDaysInput.value = appState.settings.defaultHolidayDays;
+        } catch (error) {
         console.error('Error loading application data:', error);
     }
 }
@@ -105,6 +121,11 @@ function checkAppState() {
             { id: 2, name: 'Anna Nowak', rate: 27.50, payroll: 1200.00 }
         ];
     }
+
+    // Upewnij się, że każdy pracownik ma ustawioną wartość dni urlopowych
+    appState.employees.forEach(employee => {
+    employee.holidayDaysPerYear = employee.holidayDaysPerYear || 26;
+    });
 
     // Check if current employee is set
     if (!appState.currentEmployeeId || !appState.employees.some(e => e.id === appState.currentEmployeeId)) {

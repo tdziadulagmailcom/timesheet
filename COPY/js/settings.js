@@ -7,6 +7,11 @@ function saveSettings() {
     const overtimeRateMultiplierInput = document.getElementById('overtime-rate-multiplier');
     const currencySelect = document.getElementById('currency-select');
     const languageSelect = document.getElementById('language-select');
+    const resetPasswordInput = document.getElementById('reset-password');
+    const resetPassword = resetPasswordInput.value;
+
+    const defaultHolidayDaysInput = document.getElementById('default-holiday-days');
+    const defaultHolidayDays = parseInt(defaultHolidayDaysInput.value);
     
     const regularHoursLimit = parseInt(regularHoursLimitInput.value);
     const overtimeRateMultiplier = parseFloat(overtimeRateMultiplierInput.value);
@@ -30,6 +35,11 @@ function saveSettings() {
         return;
     }
     
+    if (isNaN(defaultHolidayDays) || defaultHolidayDays < 0) {
+        alert(translations[language]['invalid-holiday-days']);
+        return;
+    }
+
     // Store previous settings to check for changes
     const prevSettings = { ...appState.settings };
     
@@ -37,7 +47,8 @@ function saveSettings() {
     appState.settings.regularHoursLimit = regularHoursLimit;
     appState.settings.overtimeRateMultiplier = overtimeRateMultiplier;
     appState.settings.currency = currency;
-    
+    appState.settings.resetPassword = resetPassword;
+    appState.settings.defaultHolidayDays = defaultHolidayDays;    
     console.log('Settings updated in appState');
     
     // Save to localStorage first
