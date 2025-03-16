@@ -1,21 +1,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Pozwól na dostęp do wszystkich kolekcji bez autoryzacji (na początek)
-    // W produkcji powinieneś dodać zabezpieczenia
     match /{document=**} {
       allow read, write;
     }
-    
-    // Przykłady bardziej szczegółowych reguł (zakomentowane)
-    // match /employees/{employeeId} {
-    //   allow read;
-    //   allow write: if request.auth != null;
-    // }
-    
-    // match /schedule/{scheduleId} {
-    //   allow read;
-    //   allow write: if request.auth != null;
-    // }
   }
 }
